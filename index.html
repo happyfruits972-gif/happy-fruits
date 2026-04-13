@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Happy Fruits">
+<title>Happy Fruits</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--banana:#F5C518;--bd:#D4A017;--green:#2D6A4F;--gl:#40916C;--bg:#FFFDF5;--sf:#FFFFFF;--sf2:#FFF9E6;--tx:#1A1A0E;--mu:#6B6B4A;--br:#E8E0C0;--red:#C0392B;--blue:#2980B9;--sh:0 2px 12px rgba(0,0,0,0.08);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--tx);min-height:100vh;padding:20px 14px 48px;padding-top:env(safe-area-inset-top,20px);}
+header{text-align:center;margin-bottom:24px;}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;color:var(--green);letter-spacing:-1px;}
+.sub{font-size:0.74rem;color:var(--mu);margin-top:3px;}
+.sync-status{display:inline-flex;align-items:center;gap:5px;font-size:0.68rem;margin-top:5px;padding:3px 10px;border-radius:20px;background:var(--sf);border:1px solid var(--br);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#aaa;}
+.sync-dot.ok{background:#2ecc71;}
+.sync-dot.saving{background:var(--banana);animation:pulse 1s infinite;}
+.sync-dot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.wbar{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;}
+.wbar button{background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;font-size:1rem;}
+.wlbl{font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;color:var(--tx);min-width:210px;text-align:center;}
+.tabs{display:flex;gap:7px;margin-bottom:18px;justify-content:center;flex-wrap:wrap;}
+.tb{padding:7px 14px;border:2px solid var(--br);background:var(--sf);border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;cursor:pointer;color:var(--mu);transition:all 0.2s;}
+.tb.on{background:var(--banana);border-color:var(--bd);color:var(--tx);}
+.panel{display:none;}.panel.on{display:block;}
+.stitle{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:7px;color:var(--green);border-left:4px solid var(--banana);padding-left:9px;}
+.card{background:var(--sf);border:1px solid var(--br);border-radius:11px;padding:16px;margin-bottom:16px;box-shadow:var(--sh);}
+table{width:100%;border-collapse:collapse;font-size:0.76rem;}
+th{background:var(--green);color:#fff;font-family:'Syne',sans-serif;font-weight:700;padding:8px 9px;text-align:left;font-size:0.72rem;}
+th:first-child{border-radius:5px 0 0 0;}th:last-child{border-radius:0 5px 0 0;}
+td{padding:8px 9px;border-bottom:1px solid var(--br);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}tr:nth-child(even) td{background:var(--sf2);}
+input[type=number],input[type=text]{font-family:'DM Mono',monospace;font-size:0.76rem;border:1px solid var(--br);border-radius:5px;padding:4px 7px;background:var(--bg);color:var(--tx);width:100%;}
+input:focus{outline:none;border-color:var(--bd);}
+.is{width:66px;}.im{width:86px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.7rem;font-weight:700;}
+.bg{background:#D4EDDA;color:#155724;border:1px solid #B8DACC;}
+.bb{background:#D0EAF8;color:#0B4D7A;border:1px solid #90C8EE;}
+.by{background:#FFF3CD;color:#856404;border:1px solid #FFE083;}
+.btn{background:var(--green);color:#fff;border:none;border-radius:7px;padding:9px 20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.86rem;cursor:pointer;}
+.btn-an{background:var(--bd);}
+.brow{margin-top:11px;}
+.trow{display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
+.tlbl{font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;}
+.ftg{padding:5px 14px;border:2px solid var(--br);background:var(--sf);border-radius:20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.76rem;cursor:pointer;color:var(--mu);transition:all 0.2s;}
+.ftg.on{background:var(--banana);border-color:var(--bd);color:var(--tx);}
+.trow-tot td{background:#F0F9F5!important;font-weight:700;border-top:2px solid var(--gl);}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:9px;}
+.rc{background:var(--sf);border:1px solid var(--br);border-radius:9px;padding:11px 9px;text-align:center;}
+.rc .v{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;color:var(--green);line-height:1;}
+.rc .l{font-size:0.65rem;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:0.4px;}
+.rc.an .v{color:var(--bd);}
+.tbadge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;background:#E0F2F1;color:#00695C;border:1px solid #80CBC4;}
+.dlbl{font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;}
+.sfb{padding:5px 13px;border:2px solid var(--br);background:var(--sf);border-radius:20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;color:var(--mu);transition:all 0.2s;}
+.sfb.on{color:#fff;}
+.ok{color:var(--green);font-size:0.73rem;font-weight:700;}
+.warn{color:#856404;font-size:0.73rem;font-weight:700;}
+.err{color:var(--red);font-size:0.73rem;font-weight:700;}
+.mbar{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px;}
+.mbar button{background:var(--green);color:#fff;border:none;border-radius:6px;padding:6px 13px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;font-size:1rem;}
+.mlbl{font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:var(--green);min-width:170px;text-align:center;}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px;}
+.mc{background:var(--sf);border:1px solid var(--br);border-radius:11px;padding:14px 12px;text-align:center;box-shadow:var(--sh);}
+.mc .mv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.85rem;color:var(--green);line-height:1;}
+.mc .ml{font-size:0.68rem;color:var(--mu);margin-top:4px;text-transform:uppercase;letter-spacing:0.4px;}
+.mc.acc .mv{color:var(--bd);}
+.mc.bl .mv{color:var(--blue);}
+.wdt th{background:#f0f4f0;color:var(--green);font-size:0.69rem;}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--green);color:#fff;padding:11px 18px;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.83rem;opacity:0;transform:translateY(8px);transition:all 0.3s;pointer-events:none;z-index:999;}
+#toast.on{opacity:1;transform:translateY(0);}
+@media(max-width:580px){body{padding:10px 6px 40px;}h1{font-size:1.4rem;}table{font-size:0.69rem;}th,td{padding:6px 5px;}.mc .mv{font-size:1.4rem;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>&#127820; Happy Fruits</h1>
+  <div class="sub">Suivi hebdomadaire de production</div>
+  <div class="sync-status"><div class="sync-dot" id="sdot"></div><span id="stxt">Connexion...</span></div>
+</header>
+
+<div class="wbar" id="wbar">
+  <button onclick="chW(-1)">&#9664;</button>
+  <div class="wlbl" id="wlbl"></div>
+  <button onclick="chW(1)">&#9654;</button>
+</div>
+
+<div class="tabs">
+  <button class="tb on" onclick="showTab('rec',event)">&#128230; Reception</button>
+  <button class="tb" onclick="showTab('denel',event)">&#127855; Denel</button>
+  <button class="tb" onclick="showTab('hf',event)">&#127820; Happy Fruits</button>
+  <button class="tb" onclick="showTab('mois',event)">&#128197; Recap Mensuel</button>
+</div>
+
+<!-- RECEPTION -->
+
+<div class="panel on" id="panel-rec">
+  <div class="card">
+    <div class="stitle">&#128230; Reception Bananes - Vendredi</div>
+    <div class="trow">
+      <span class="tlbl">Fournisseurs banane :</span>
+      <button id="bf1" class="ftg" onclick="setNbB(1)">1 fournisseur</button>
+      <button id="bf2" class="ftg on" onclick="setNbB(2)">2 fournisseurs</button>
+    </div>
+    <table>
+      <thead><tr><th></th><th>Nom</th><th>Palox recus</th><th>Poids estime</th><th>Observations</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bg">F1</span></td>
+          <td><input type="text" id="b1n" placeholder="Fournisseur 1"></td>
+          <td><input type="number" id="b1p" class="is" min="0" placeholder="0" oninput="calcBRec()"></td>
+          <td id="b1kg" style="font-weight:700;color:var(--green)">--</td>
+          <td><input type="text" id="b1o" placeholder="Etat, couleur..."></td>
+        </tr>
+        <tr id="rowb2">
+          <td><span class="badge bb">F2</span></td>
+          <td><input type="text" id="b2n" placeholder="Fournisseur 2"></td>
+          <td><input type="number" id="b2p" class="is" min="0" placeholder="0" oninput="calcBRec()"></td>
+          <td id="b2kg" style="font-weight:700;color:var(--blue)">--</td>
+          <td><input type="text" id="b2o" placeholder="Etat, couleur..."></td>
+        </tr>
+        <tr class="trow-tot">
+          <td colspan="2" style="font-family:Syne,sans-serif;">TOTAL BANANES</td>
+          <td id="btot-p">--</td><td id="btot-kg">--</td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="brow"><button class="btn" onclick="saveRec()">Enregistrer reception</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stitle">&#9878; Repartition des palox</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.8rem;">Stock disponible</span>
+      <span id="stock-lbl" style="font-family:Syne,sans-serif;font-weight:800;color:var(--green);">-- palox</span>
+    </div>
+    <div style="background:var(--br);border-radius:20px;height:13px;overflow:hidden;position:relative;margin-bottom:12px;">
+      <div id="bar-d" style="position:absolute;left:0;top:0;height:100%;background:var(--blue);border-radius:20px 0 0 20px;transition:width 0.3s;width:0%"></div>
+      <div id="bar-h" style="position:absolute;top:0;height:100%;background:var(--bd);transition:width 0.3s,left 0.3s;width:0%;left:0%"></div>
+    </div>
+    <div style="display:flex;gap:14px;font-size:0.7rem;margin-bottom:12px;flex-wrap:wrap;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--blue);border-radius:2px;margin-right:3px;"></span>Denel</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--bd);border-radius:2px;margin-right:3px;"></span>Happy Fruits</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--br);border-radius:2px;margin-right:3px;"></span>Non alloue</span>
+    </div>
+    <table>
+      <thead><tr><th>Destination</th><th>Palox alloues</th><th>Kg estimes</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bb">Denel</span></td>
+          <td><input type="number" id="al-d" class="is" min="0" placeholder="0" oninput="calcAlloc()"></td>
+          <td id="al-dkg" style="font-weight:700;color:var(--blue)">--</td>
+          <td id="al-dst"></td>
+        </tr>
+        <tr>
+          <td><span class="badge by">Happy Fruits</span></td>
+          <td><input type="number" id="al-h" class="is" min="0" placeholder="0" oninput="calcAlloc()"></td>
+          <td id="al-hkg" style="font-weight:700;color:var(--bd)">--</td>
+          <td id="al-hst"></td>
+        </tr>
+        <tr class="trow-tot">
+          <td style="font-family:Syne,sans-serif;">TOTAL</td>
+          <td id="al-tot">--</td><td id="al-totkg">--</td><td id="al-rest"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="brow"><button class="btn" onclick="saveAlloc()">Enregistrer repartition</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stitle">&#127777; Murissage Bananes</div>
+    <table>
+      <thead><tr><th>Jour</th><th>Temp. cible</th><th>Temp. reelle</th><th>Degazage</th><th>Observations</th></tr></thead>
+      <tbody id="muris-body"></tbody>
+    </table>
+    <div class="brow"><button class="btn" onclick="saveMuris()">Enregistrer murissage</button></div>
+  </div>
+
+  <div class="card" id="card-ananas-rec" style="display:none;">
+    <div class="stitle" style="color:var(--bd);border-color:var(--banana);">&#127821; Reception Ananas</div>
+    <div class="trow">
+      <span class="tlbl">Fournisseurs ananas :</span>
+      <button id="af1" class="ftg on" onclick="setNbA(1)">1 fournisseur</button>
+      <button id="af2" class="ftg" onclick="setNbA(2)">2 fournisseurs</button>
+    </div>
+    <table>
+      <thead><tr><th></th><th>Nom</th><th>Colis recus</th><th>Poids (x12kg)</th><th>Pieces (x8)</th><th>Observations</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge by">A1</span></td>
+          <td><input type="text" id="a1n" placeholder="Fournisseur ananas 1"></td>
+          <td><input type="number" id="a1p" class="is" min="0" placeholder="0" oninput="calcARec()"></td>
+          <td id="a1kg" style="font-weight:700;color:var(--bd)">--</td>
+          <td id="a1pc" style="font-weight:700;color:var(--mu)">--</td>
+          <td><input type="text" id="a1o" placeholder="Etat..."></td>
+        </tr>
+        <tr id="rowa2" style="display:none;">
+          <td><span class="badge" style="background:#F9EBEA;color:#7B241C;border:1px solid #F1948A;">A2</span></td>
+          <td><input type="text" id="a2n" placeholder="Fournisseur ananas 2"></td>
+          <td><input type="number" id="a2p" class="is" min="0" placeholder="0" oninput="calcARec()"></td>
+          <td id="a2kg" style="font-weight:700;color:#C0392B">--</td>
+          <td id="a2pc" style="font-weight:700;color:var(--mu)">--</td>
+          <td><input type="text" id="a2o" placeholder="Etat..."></td>
+        </tr>
+        <tr class="trow-tot">
+          <td colspan="2" style="font-family:Syne,sans-serif;">TOTAL ANANAS</td>
+          <td id="atot-c">--</td><td id="atot-kg">--</td><td id="atot-pc">--</td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="brow"><button class="btn btn-an" onclick="saveARec()">Enregistrer reception ananas</button></div>
+  </div>
+</div>
+
+<!-- DENEL -->
+
+<div class="panel" id="panel-denel">
+  <div class="card">
+    <div class="stitle">&#127855; Denel - Suivi quotidien</div>
+    <table>
+      <thead><tr><th>Jour</th><th>Palox epluches</th><th>Kg estimes (x300)</th><th>Kg livres</th><th>Observations</th></tr></thead>
+      <tbody id="denel-body"></tbody>
+    </table>
+    <div class="brow"><button class="btn" onclick="saveDenel()">Enregistrer Denel</button></div>
+  </div>
+  <div class="card">
+    <div class="stitle">&#128202; Recap semaine Denel</div>
+    <div class="rgrid">
+      <div class="rc"><div class="v" id="d-p">0</div><div class="l">Palox epluches</div></div>
+      <div class="rc"><div class="v" id="d-kep">0</div><div class="l">kg estimes</div></div>
+      <div class="rc"><div class="v" id="d-kliv">0</div><div class="l">kg livres</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- HAPPY FRUITS -->
+
+<div class="panel" id="panel-hf">
+  <div class="card" style="padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-family:Syne,sans-serif;font-weight:800;font-size:0.85rem;color:var(--green);">&#127820; Happy Fruits - Atelier deshydratation</span>
+      <span id="an-badge" style="font-size:0.63rem;background:#FFF3CD;color:#856404;border-radius:4px;padding:2px 6px;margin-left:4px;">&#127821; Ananas non actif</span>
+      <button id="btn-act-an" onclick="activateAnanas()" style="padding:4px 12px;border:none;background:var(--bd);color:#fff;border-radius:20px;font-family:Syne,sans-serif;font-weight:700;font-size:0.71rem;cursor:pointer;margin-left:4px;">Activer suivi Ananas</button>
+    </div>
+  </div>
+  <div id="hf-sessions"></div>
+  <div class="card">
+    <div class="stitle">&#128202; Recap semaine</div>
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.8rem;color:var(--green);margin-bottom:8px;">&#127820; Banane</div>
+    <div class="rgrid" style="margin-bottom:14px;">
+      <div class="rc"><div class="v" id="hb-p">0</div><div class="l">Palox epluches</div></div>
+      <div class="rc"><div class="v" id="hb-s40">0</div><div class="l">Sachets 40g</div></div>
+      <div class="rc"><div class="v" id="hb-s115">0</div><div class="l">Sachets 115g</div></div>
+      <div class="rc"><div class="v" id="hb-s40c">0</div><div class="l">40g cannelle</div></div>
+      <div class="rc"><div class="v" id="hb-s115c">0</div><div class="l">115g cannelle</div></div>
+      <div class="rc"><div class="v" id="hb-tot">0</div><div class="l">Total sachets</div></div>
+      <div class="rc"><div class="v" id="hb-kg">0</div><div class="l">kg produit</div></div>
+    </div>
+    <div id="recap-an" style="display:none;">
+      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.8rem;color:var(--bd);margin-bottom:8px;">&#127821; Ananas</div>
+      <div class="rgrid">
+        <div class="rc an"><div class="v" id="ha-c">0</div><div class="l">Colis epluches</div></div>
+        <div class="rc an"><div class="v" id="ha-s30">0</div><div class="l">Sachets 30g</div></div>
+        <div class="rc an"><div class="v" id="ha-tot">0</div><div class="l">Total sachets</div></div>
+        <div class="rc an"><div class="v" id="ha-kg">0</div><div class="l">kg produit</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RECAP MENSUEL -->
+
+<div class="panel" id="panel-mois">
+  <div class="mbar">
+    <button onclick="chM(-1)">&#9664;</button>
+    <div class="mlbl" id="mlbl"></div>
+    <button onclick="chM(1)">&#9654;</button>
+  </div>
+  <div class="mgrid">
+    <div class="mc"><div class="mv" id="m-bprec">0</div><div class="ml">Palox recus total</div></div>
+    <div class="mc acc"><div class="mv" id="m-bf1">0</div><div class="ml">Palox F1</div></div>
+    <div class="mc acc"><div class="mv" id="m-bf2">0</div><div class="ml">Palox F2</div></div>
+    <div class="mc bl"><div class="mv" id="m-dp">0</div><div class="ml">Palox Denel</div></div>
+    <div class="mc bl"><div class="mv" id="m-dkg">0</div><div class="ml">kg livres Denel</div></div>
+    <div class="mc"><div class="mv" id="m-hbp">0</div><div class="ml">Palox HF Banane</div></div>
+    <div class="mc"><div class="mv" id="m-hbs">0</div><div class="ml">Sachets Banane</div></div>
+    <div class="mc acc"><div class="mv" id="m-hac">0</div><div class="ml">Colis HF Ananas</div></div>
+    <div class="mc acc"><div class="mv" id="m-has">0</div><div class="ml">Sachets Ananas</div></div>
+  </div>
+  <div class="card">
+    <div class="stitle">&#128203; Detail par semaine</div>
+    <div style="overflow-x:auto;">
+      <table class="wdt">
+        <thead><tr><th>Semaine</th><th>Palox recus</th><th>F1</th><th>F2</th><th>Palox Denel</th><th>kg Denel</th><th>Palox HF Banane</th><th>Sachets Banane</th><th>Colis Ananas</th><th>Sachets Ananas</th></tr></thead>
+        <tbody id="mois-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===== SUPABASE SETUP =====
+const { createClient } = supabase;
+const DB = createClient('https://bhdzmcbbrkbmkuqhyyrc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoZHptY2JicmtibWt1cWh5eXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NjE3NTgsImV4cCI6MjA5MTMzNzc1OH0.hcr_4g9Y7aDYYE8f-YnxUGgFR6Ug5Sz9xHKpbvpvxzE');
+
+var CW=0, CM=0, nbB=2, nbA=1, ananasOn=false;
+var MFR=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+var MURIS=[{o:-2,l:'Samedi',t:18,dg:false},{o:-1,l:'Dimanche',t:18,dg:true},{o:0,l:'Lundi',t:18,dg:false},{o:1,l:'Mardi',t:16.5,dg:false},{o:2,l:'Mercredi',t:15.5,dg:false},{o:3,l:'Jeudi',t:14.5,dg:false},{o:4,l:'Vendredi',t:14.5,dg:false}];
+var DENEL=[{o:0,l:'Lundi'},{o:1,l:'Mardi'},{o:2,l:'Mercredi'},{o:3,l:'Jeudi'},{o:4,l:'Vendredi'}];
+var SESS=[{eo:0,el:'Lundi',so:1,sl:'Mardi'},{eo:2,el:'Mercredi',so:3,sl:'Jeudi'}];
+
+// ===== SYNC STATUS =====
+function syncStatus(state, txt) {
+  var dot = document.getElementById('sdot');
+  var stxt = document.getElementById('stxt');
+  dot.className = 'sync-dot ' + state;
+  stxt.textContent = txt;
+}
+
+// ===== SUPABASE HELPERS =====
+async function dbLoad(section, wk) {
+  try {
+    var key = wk || wkey();
+    var {data, error} = await DB.from('hf_data').select('data').eq('wkey', key).eq('section', section).single();
+    if (error || !data) return {};
+    return data.data || {};
+  } catch(e) { return {}; }
+}
+
+async function dbSave(section, val, wk) {
+  try {
+    syncStatus('saving', 'Sauvegarde...');
+    var key = wk || wkey();
+    var {error} = await DB.from('hf_data').upsert({wkey: key, section: section, data: val, updated_at: new Date().toISOString()}, {onConflict: 'wkey,section'});
+    if (error) throw error;
+    syncStatus('ok', 'Synchronise');
+  } catch(e) {
+    syncStatus('err', 'Erreur sync');
+    console.error(e);
+  }
+}
+
+// ===== INIT TABLE =====
+async function initDB() {
+  syncStatus('saving', 'Connexion...');
+  try {
+    var {error} = await DB.from('hf_data').select('wkey').limit(1);
+    if (error && error.code === '42P01') {
+      // Table doesn't exist - show instructions
+      syncStatus('err', 'Table manquante - voir console');
+      console.log('Cree la table dans Supabase SQL Editor:\n' +
+        'CREATE TABLE hf_data (\n' +
+        '  id SERIAL PRIMARY KEY,\n' +
+        '  wkey TEXT NOT NULL,\n' +
+        '  section TEXT NOT NULL,\n' +
+        '  data JSONB,\n' +
+        '  updated_at TIMESTAMPTZ DEFAULT NOW(),\n' +
+        '  UNIQUE(wkey, section)\n' +
+        ');\n' +
+        'ALTER TABLE hf_data DISABLE ROW LEVEL SECURITY;'
+      );
+    } else {
+      syncStatus('ok', 'Connecte');
+    }
+  } catch(e) {
+    syncStatus('err', 'Hors ligne');
+  }
+}
+
+// ===== CACHE LOCAL pour offline =====
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+
+async function ld(section, def, wk) {
+  var key = (wk||wkey()) + '_' + section;
+  var cached = lsGet(key, null);
+  try {
+    var dbVal = await dbLoad(section, wk||wkey());
+    if (dbVal && Object.keys(dbVal).length > 0) {
+      lsSet(key, dbVal);
+      return dbVal;
+    }
+  } catch(e) {}
+  return cached || def;
+}
+
+async function sv(section, val, wk) {
+  var key = (wk||wkey()) + '_' + section;
+  lsSet(key, val);
+  await dbSave(section, val, wk);
+}
+
+// ===== DATE UTILS =====
+function getMon(woff){var d=new Date();var day=d.getDay();d.setDate(d.getDate()-(day===0?6:day-1)+woff*7);d.setHours(0,0,0,0);return d;}
+function isoW(d){var t=new Date(d);t.setDate(t.getDate()+3-(t.getDay()+6)%7);var w=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7);}
+function wkey(woff){var m=getMon(woff==null?CW:woff);return m.getFullYear()+'-W'+String(isoW(m)).padStart(2,'0');}
+function fmt(d){return d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2000);}
+
+function showTab(id,e){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('panel-'+id).classList.add('on');
+  if(e&&e.target)e.target.classList.add('on');
+  document.getElementById('wbar').style.display=id==='mois'?'none':'flex';
+  if(id==='mois')renderMois();
+  if(id==='hf')renderHF();
+}
+
+function chW(d){CW+=d;renderAll();}
+function chM(d){CM+=d;renderMois();}
+
+function renderWlbl(){
+  var m=getMon(CW);var e=new Date(m);e.setDate(m.getDate()+6);
+  document.getElementById('wlbl').textContent='Sem '+String(isoW(m)).padStart(2,'0')+' : '+m.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' - '+e.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+// ===== RECEPTION BANANES =====
+function setNbB(n){nbB=n;document.getElementById('bf1').classList.toggle('on',n===1);document.getElementById('bf2').classList.toggle('on',n===2);document.getElementById('rowb2').style.display=n===1?'none':'';if(n===1)document.getElementById('b2p').value='';calcBRec();}
+function calcBRec(){
+  var p1=parseInt(document.getElementById('b1p').value)||0;
+  var p2=nbB===2?(parseInt(document.getElementById('b2p').value)||0):0;
+  var tot=p1+p2;
+  document.getElementById('b1kg').textContent=p1?(p1*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('b2kg').textContent=p2?(p2*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('btot-p').textContent=tot?tot+' palox':'--';
+  document.getElementById('btot-kg').textContent=tot?(tot*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('stock-lbl').textContent=tot+' palox disponibles';
+  calcAlloc();
+}
+async function renderRec(){
+  var s=await ld('rec',{});
+  nbB=s.nbB||2;
+  document.getElementById('b1n').value=s.b1n||'';document.getElementById('b1p').value=s.b1p||'';document.getElementById('b1o').value=s.b1o||'';
+  document.getElementById('b2n').value=s.b2n||'';document.getElementById('b2p').value=s.b2p||'';document.getElementById('b2o').value=s.b2o||'';
+  setNbB(nbB);
+  var al=await ld('alloc',{});
+  document.getElementById('al-d').value=al.d||'';document.getElementById('al-h').value=al.h||'';
+  calcBRec();
+}
+async function saveRec(){
+  await sv('rec',{nbB:nbB,b1n:document.getElementById('b1n').value,b1p:document.getElementById('b1p').value,b1o:document.getElementById('b1o').value,b2n:document.getElementById('b2n').value,b2p:document.getElementById('b2p').value,b2o:document.getElementById('b2o').value});
+  calcAlloc();toast('Reception enregistree !');
+}
+
+// ===== REPARTITION =====
+function calcAlloc(){
+  var p1=parseInt(document.getElementById('b1p').value)||0;
+  var p2=nbB===2?(parseInt(document.getElementById('b2p').value)||0):0;
+  var tot=p1+p2;
+  var d=parseInt(document.getElementById('al-d').value)||0;
+  var h=parseInt(document.getElementById('al-h').value)||0;
+  var sum=d+h;var rest=tot-sum;
+  document.getElementById('al-dkg').textContent=d?(d*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('al-hkg').textContent=h?(h*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('al-tot').textContent=sum+' / '+tot+' palox';
+  document.getElementById('al-totkg').textContent=sum?(sum*300).toLocaleString('fr-FR')+' kg':'--';
+  var pd=tot>0?(d/tot)*100:0;var ph=tot>0?(h/tot)*100:0;
+  document.getElementById('bar-d').style.width=Math.min(pd,100)+'%';
+  document.getElementById('bar-h').style.left=pd+'%';document.getElementById('bar-h').style.width=Math.min(ph,100-pd)+'%';
+  if(sum>tot){document.getElementById('al-rest').innerHTML='<span class="err">&#9888; +' +(sum-tot)+' depassement</span>';document.getElementById('al-dst').innerHTML='';document.getElementById('al-hst').innerHTML='';}
+  else if(rest===0&&sum>0){document.getElementById('al-rest').innerHTML='<span class="ok">&#10003; Tout alloue</span>';document.getElementById('al-dst').innerHTML='<span class="ok">OK</span>';document.getElementById('al-hst').innerHTML='<span class="ok">OK</span>';}
+  else{document.getElementById('al-rest').innerHTML=rest>0?'<span class="warn">'+rest+' non alloues</span>':'';document.getElementById('al-dst').innerHTML=d?'<span class="ok">OK</span>':'';document.getElementById('al-hst').innerHTML=h?'<span class="ok">OK</span>':'';}
+}
+async function saveAlloc(){await sv('alloc',{d:document.getElementById('al-d').value,h:document.getElementById('al-h').value});toast('Repartition enregistree !');}
+
+// ===== MURISSAGE =====
+async function renderMuris(){
+  var s=await ld('muris',{});var mon=getMon(CW);var body=document.getElementById('muris-body');body.innerHTML='';
+  MURIS.forEach(function(m,i){
+    var d=new Date(mon);d.setDate(mon.getDate()+m.o);
+    var sv2=s['r'+i]||{};
+    var dg=m.dg?'<span class="badge by">Oui 10min</span>':'<span style="font-size:0.7rem;color:#bbb">Non</span>';
+    body.innerHTML+='<tr><td><span class="dlbl">'+m.l+'</span><br><span style="font-size:0.66rem;color:var(--mu)">'+fmt(d)+'</span></td><td><span class="tbadge">'+m.t+' C</span></td><td><input type="number" class="is" id="mt'+i+'" step="0.1" value="'+(sv2.t||'')+'" placeholder="--"></td><td>'+dg+'</td><td><input type="text" id="mo'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td></tr>';
+  });
+}
+async function saveMuris(){var obj={};MURIS.forEach(function(m,i){obj['r'+i]={t:(document.getElementById('mt'+i)||{}).value,o:(document.getElementById('mo'+i)||{}).value};});await sv('muris',obj);toast('Murissage enregistre !');}
+
+// ===== ANANAS RECEPTION =====
+function setNbA(n){nbA=n;document.getElementById('af1').classList.toggle('on',n===1);document.getElementById('af2').classList.toggle('on',n===2);document.getElementById('rowa2').style.display=n===1?'none':'';if(n===1)document.getElementById('a2p').value='';calcARec();}
+function calcARec(){
+  var p1=parseInt(document.getElementById('a1p').value)||0;
+  var p2=nbA===2?(parseInt(document.getElementById('a2p').value)||0):0;
+  var tot=p1+p2;
+  document.getElementById('a1kg').textContent=p1?(p1*12).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('a1pc').textContent=p1?(p1*8)+' pcs':'--';
+  document.getElementById('a2kg').textContent=p2?(p2*12).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('a2pc').textContent=p2?(p2*8)+' pcs':'--';
+  document.getElementById('atot-c').textContent=tot?tot+' colis':'--';
+  document.getElementById('atot-kg').textContent=tot?(tot*12).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('atot-pc').textContent=tot?(tot*8)+' pcs':'--';
+}
+async function renderARec(){
+  var s=await ld('arec',{});nbA=s.nbA||1;
+  document.getElementById('a1n').value=s.a1n||'';document.getElementById('a1p').value=s.a1p||'';document.getElementById('a1o').value=s.a1o||'';
+  document.getElementById('a2n').value=s.a2n||'';document.getElementById('a2p').value=s.a2p||'';document.getElementById('a2o').value=s.a2o||'';
+  setNbA(nbA);
+}
+async function saveARec(){await sv('arec',{nbA:nbA,a1n:document.getElementById('a1n').value,a1p:document.getElementById('a1p').value,a1o:document.getElementById('a1o').value,a2n:document.getElementById('a2n').value,a2p:document.getElementById('a2p').value,a2o:document.getElementById('a2o').value});toast('Reception ananas enregistree !');}
+
+// ===== ANANAS ACTIVATION =====
+async function activateAnanas(){
+  ananasOn=true;
+  await sv('ananas_on',{on:true});
+  loadAnanasState();
+  toast('Suivi ananas active !');
+}
+async function loadAnanasState(){
+  var s=await ld('ananas_on',{});
+  ananasOn=s.on===true;
+  document.getElementById('an-badge').style.display=ananasOn?'none':'inline';
+  document.getElementById('btn-act-an').style.display=ananasOn?'none':'inline-block';
+  document.getElementById('card-ananas-rec').style.display=ananasOn?'block':'none';
+  document.getElementById('recap-an').style.display=ananasOn?'block':'none';
+  if(ananasOn)renderARec();
+}
+
+// ===== DENEL =====
+async function renderDenel(){
+  var s=await ld('denel',{});var mon=getMon(CW);var body=document.getElementById('denel-body');body.innerHTML='';
+  DENEL.forEach(function(dd,i){
+    var d=new Date(mon);d.setDate(mon.getDate()+dd.o);
+    var sv2=s['r'+i]||{};
+    body.innerHTML+='<tr><td><span class="dlbl">'+dd.l+'</span><br><span style="font-size:0.66rem;color:var(--mu)">'+fmt(d)+'</span></td><td><input type="number" class="is" id="dp'+i+'" value="'+(sv2.p||'')+'" placeholder="0" min="0" oninput="calcDenel()"></td><td id="dke'+i+'" style="font-weight:700;color:var(--green)">'+(sv2.p?(parseInt(sv2.p)*300).toLocaleString('fr-FR')+' kg':'--')+'</td><td><input type="number" class="im" id="dl'+i+'" value="'+(sv2.l||'')+'" placeholder="0" oninput="calcDenel()"></td><td><input type="text" id="do'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td></tr>';
+  });
+  calcDenel();
+}
+function calcDenel(){
+  var p=0,kl=0;
+  DENEL.forEach(function(dd,i){
+    var pi=parseInt((document.getElementById('dp'+i)||{}).value)||0;p+=pi;
+    if(document.getElementById('dke'+i))document.getElementById('dke'+i).textContent=pi?(pi*300).toLocaleString('fr-FR')+' kg':'--';
+    kl+=parseFloat((document.getElementById('dl'+i)||{}).value)||0;
+  });
+  document.getElementById('d-p').textContent=p;
+  document.getElementById('d-kep').textContent=(p*300).toLocaleString('fr-FR');
+  document.getElementById('d-kliv').textContent=kl.toLocaleString('fr-FR');
+}
+async function saveDenel(){
+  var obj={};
+  DENEL.forEach(function(dd,i){obj['r'+i]={p:(document.getElementById('dp'+i)||{}).value||'',l:(document.getElementById('dl'+i)||{}).value||'',o:(document.getElementById('do'+i)||{}).value||''};});
+  await sv('denel',obj);toast('Denel enregistre !');
+}
+
+// ===== HAPPY FRUITS =====
+async function renderHF(){
+  var container=document.getElementById('hf-sessions');
+  if(!container)return;
+  var s=await ld('hf',{});var mon=getMon(CW);
+  container.innerHTML='';
+  SESS.forEach(function(ss,i){
+    var sv2=s['r'+i]||{};
+    var fruit=sv2.fruit||'banane';
+    var de=new Date(mon);de.setDate(mon.getDate()+ss.eo);
+    var ds=new Date(mon);ds.setDate(mon.getDate()+ss.so);
+    var fc=fruit==='ananas'?'var(--bd)':fruit==='banane'?'var(--green)':'#aaa';
+    var anBtn=ananasOn?'<button class="sfb'+(fruit==='ananas'?' on':'')+'" style="--fc:var(--bd)" onclick="setSF('+i+',\'ananas\')">&#127821; Ananas</button>':'';
+    var fields=buildFields(i,fruit,sv2);
+    container.innerHTML+=
+      '<div class="card" id="sc'+i+'" style="border-left:4px solid '+fc+'">'+
+      '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:11px;">'+
+      '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:0.93rem;color:'+fc+'">Session '+(i+1)+' &mdash; '+ss.el+'</span>'+
+      '<span style="font-size:0.68rem;color:var(--mu)">Epluchage '+fmt(de)+' &bull; Sachets '+fmt(ds)+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;align-items:center;">'+
+      '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.76rem;">Fruit :</span>'+
+      '<button class="sfb'+(fruit==='banane'?' on':'')+'" style="--fc:var(--green)" onclick="setSF('+i+',\'banane\')">&#127820; Banane</button>'+
+      anBtn+
+      '<button class="sfb'+(fruit==='rien'?' on':'')+'" style="--fc:#999" onclick="setSF('+i+',\'rien\')">&#10006; Rien</button>'+
+      '</div>'+
+      '<div id="sf'+i+'">'+fields+'</div>'+
+      '</div>';
+  });
+  if(!document.getElementById('sfbst')){var st=document.createElement('style');st.id='sfbst';st.textContent='.sfb{padding:5px 13px;border:2px solid var(--br);background:var(--sf);border-radius:20px;font-family:Syne,sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;color:var(--mu);transition:all 0.2s;}.sfb.on{color:#fff;}';document.head.appendChild(st);}
+  calcHF(s);
+}
+
+function buildFields(i,fruit,sv2){
+  if(fruit==='rien')return '<div style="color:var(--mu);font-size:0.78rem;padding:5px 0;font-style:italic;">Pas de production cette session.</div>';
+  if(fruit==='banane'){
+    var kge=sv2.p?(parseInt(sv2.p)*300).toLocaleString('fr-FR')+' kg':'--';
+    return '<div style="overflow-x:auto"><table><thead><tr><th>Palox</th><th>Kg estimes</th><th>40g</th><th>115g</th><th>40g can.</th><th>115g can.</th><th>Obs.</th></tr></thead><tbody><tr>'+
+      '<td><input type="number" class="is" id="bp'+i+'" value="'+(sv2.p||'')+'" placeholder="0" min="0" oninput="calcHF()"></td>'+
+      '<td id="bke'+i+'" style="font-weight:700;color:var(--green)">'+kge+'</td>'+
+      '<td><input type="number" class="is" id="b40-'+i+'" value="'+(sv2.s40||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="number" class="is" id="b115-'+i+'" value="'+(sv2.s115||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="number" class="is" id="b40c-'+i+'" value="'+(sv2.s40c||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="number" class="is" id="b115c-'+i+'" value="'+(sv2.s115c||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="text" id="bo'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td>'+
+      '</tr></tbody></table></div>'+
+      '<div class="brow"><button class="btn" onclick="saveS('+i+')">Enregistrer session '+(i+1)+'</button></div>';
+  }
+  if(fruit==='ananas'){
+    var c=sv2.anp?parseInt(sv2.anp):0;
+    return '<div style="overflow-x:auto"><table><thead><tr><th>Colis</th><th>Kg nets (x12)</th><th>Pieces (x8)</th><th>Sachets 30g</th><th>Obs.</th></tr></thead><tbody><tr>'+
+      '<td><input type="number" class="is" id="ac'+i+'" value="'+(sv2.anp||'')+'" placeholder="0" min="0" oninput="calcHF()"></td>'+
+      '<td id="ake'+i+'" style="font-weight:700;color:var(--bd)">'+(c?c*12+' kg':'--')+'</td>'+
+      '<td id="apc'+i+'" style="font-weight:700;color:var(--mu)">'+(c?c*8+' pcs':'--')+'</td>'+
+      '<td><input type="number" class="is" id="a30-'+i+'" value="'+(sv2.s30||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="text" id="ao'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td>'+
+      '</tr></tbody></table></div>'+
+      '<div class="brow"><button class="btn btn-an" onclick="saveS('+i+')">Enregistrer session '+(i+1)+'</button></div>';
+  }
+  return '';
+}
+
+async function setSF(i,fruit){
+  var s=await ld('hf',{});
+  if(!s['r'+i])s['r'+i]={};
+  s['r'+i].fruit=fruit;
+  await sv('hf',s);
+  renderHF();
+}
+
+async function saveS(i){
+  var s=await ld('hf',{});
+  if(!s['r'+i])s['r'+i]={};
+  var d=s['r'+i];var fruit=d.fruit||'banane';
+  if(fruit==='banane'){d.p=(document.getElementById('bp'+i)||{}).value||'';d.s40=(document.getElementById('b40-'+i)||{}).value||'';d.s115=(document.getElementById('b115-'+i)||{}).value||'';d.s40c=(document.getElementById('b40c-'+i)||{}).value||'';d.s115c=(document.getElementById('b115c-'+i)||{}).value||'';d.o=(document.getElementById('bo'+i)||{}).value||'';}
+  else if(fruit==='ananas'){d.anp=(document.getElementById('ac'+i)||{}).value||'';d.s30=(document.getElementById('a30-'+i)||{}).value||'';d.o=(document.getElementById('ao'+i)||{}).value||'';}
+  s['r'+i]=d;await sv('hf',s);toast('Session '+(i+1)+' enregistree !');
+}
+
+function calcHF(s){
+  s=s||{};
+  var bp=0,s40=0,s115=0,s40c=0,s115c=0,ac=0,s30=0;
+  SESS.forEach(function(ss,i){
+    var d=s['r'+i]||{};var fruit=d.fruit||'banane';
+    if(fruit==='banane'){
+      var p=parseInt((document.getElementById('bp'+i)||{}).value)||parseInt(d.p)||0;bp+=p;
+      if(document.getElementById('bke'+i))document.getElementById('bke'+i).textContent=p?(p*300).toLocaleString('fr-FR')+' kg':'--';
+      s40+=parseInt((document.getElementById('b40-'+i)||{}).value)||0;s115+=parseInt((document.getElementById('b115-'+i)||{}).value)||0;
+      s40c+=parseInt((document.getElementById('b40c-'+i)||{}).value)||0;s115c+=parseInt((document.getElementById('b115c-'+i)||{}).value)||0;
+    }else if(fruit==='ananas'){
+      var a=parseInt((document.getElementById('ac'+i)||{}).value)||parseInt(d.anp)||0;ac+=a;
+      if(document.getElementById('ake'+i))document.getElementById('ake'+i).textContent=a?a*12+' kg':'--';
+      if(document.getElementById('apc'+i))document.getElementById('apc'+i).textContent=a?a*8+' pcs':'--';
+      s30+=parseInt((document.getElementById('a30-'+i)||{}).value)||0;
+    }
+  });
+  var bt=s40+s115+s40c+s115c;
+  document.getElementById('hb-p').textContent=bp;document.getElementById('hb-s40').textContent=s40;document.getElementById('hb-s115').textContent=s115;
+  document.getElementById('hb-s40c').textContent=s40c;document.getElementById('hb-s115c').textContent=s115c;document.getElementById('hb-tot').textContent=bt;
+  document.getElementById('hb-kg').textContent=((s40+s40c)*0.04+(s115+s115c)*0.115).toFixed(2)+' kg';
+  document.getElementById('ha-c').textContent=ac;document.getElementById('ha-s30').textContent=s30;document.getElementById('ha-tot').textContent=s30;
+  document.getElementById('ha-kg').textContent=(s30*0.03).toFixed(2)+' kg';
+}
+
+// ===== RECAP MENSUEL =====
+function getWeeksOfMonth(y,m){var d=new Date(y,m,1);var day=d.getDay();d.setDate(d.getDate()-(day===0?6:day-1));var last=new Date(y,m+1,0);var weeks=[];while(d<=last){weeks.push(new Date(d));d=new Date(d);d.setDate(d.getDate()+7);}return weeks;}
+
+async function renderMois(){
+  var now=new Date();var td=new Date(now.getFullYear(),now.getMonth()+CM,1);
+  var y=td.getFullYear();var m=td.getMonth();
+  document.getElementById('mlbl').textContent=MFR[m]+' '+y;
+  var weeks=getWeeksOfMonth(y,m);
+  var tb=0,tf1=0,tf2=0,tdp=0,tdkg=0,thbp=0,thbs=0,thac=0,thas=0;
+  var body=document.getElementById('mois-body');body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--mu);font-style:italic;padding:16px;">Chargement...</td></tr>';
+  var rows='';
+  for(var wi=0;wi<weeks.length;wi++){
+    var mon=weeks[wi];
+    var wkStr=mon.getFullYear()+'-W'+String(isoW(mon)).padStart(2,'0');
+    var rec=await ld('rec',{},wkStr);
+    var p1=parseInt(rec.b1p)||0;var p2=parseInt(rec.b2p)||0;var bprec=p1+p2;
+    var den=await ld('denel',{},wkStr);var dp=0,dkg=0;
+    for(var i=0;i<5;i++){var dr=den['r'+i]||{};dp+=parseInt(dr.p)||0;dkg+=parseFloat(dr.l)||0;}
+    var hf=await ld('hf',{},wkStr);var hbp=0,hbs=0,hac=0,has=0;
+    for(var j=0;j<2;j++){var hr=hf['r'+j]||{};var fruit=hr.fruit||'banane';if(fruit==='banane'){hbp+=parseInt(hr.p)||0;hbs+=(parseInt(hr.s40)||0)+(parseInt(hr.s115)||0)+(parseInt(hr.s40c)||0)+(parseInt(hr.s115c)||0);}else if(fruit==='ananas'){hac+=parseInt(hr.anp)||0;has+=parseInt(hr.s30)||0;}}
+    tb+=bprec;tf1+=p1;tf2+=p2;tdp+=dp;tdkg+=dkg;thbp+=hbp;thbs+=hbs;thac+=hac;thas+=has;
+    var fri=new Date(mon);fri.setDate(mon.getDate()+4);
+    var wl='S'+String(isoW(mon)).padStart(2,'0');
+    var hasData=bprec>0||dp>0||hbp>0||hac>0;
+    var st=hasData?'':'style="color:var(--mu);font-style:italic;"';
+    rows+='<tr '+st+'><td><strong>'+wl+'</strong><br><span style="font-size:0.66rem">'+mon.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'-'+fri.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'</span></td><td>'+(bprec||'--')+'</td><td>'+(p1||'--')+'</td><td>'+(p2||'--')+'</td><td>'+(dp||'--')+'</td><td>'+(dkg?dkg.toLocaleString('fr-FR')+' kg':'--')+'</td><td>'+(hbp||'--')+'</td><td>'+(hbs||'--')+'</td><td>'+(hac||'--')+'</td><td>'+(has||'--')+'</td></tr>';
+  }
+  rows+='<tr class="trow-tot"><td style="font-family:Syne,sans-serif">TOTAL</td><td>'+tb+'</td><td>'+tf1+'</td><td>'+tf2+'</td><td>'+tdp+'</td><td>'+tdkg.toLocaleString('fr-FR')+' kg</td><td>'+thbp+'</td><td>'+thbs+'</td><td>'+thac+'</td><td>'+thas+'</td></tr>';
+  body.innerHTML=rows;
+  document.getElementById('m-bprec').textContent=tb;document.getElementById('m-bf1').textContent=tf1;document.getElementById('m-bf2').textContent=tf2;
+  document.getElementById('m-dp').textContent=tdp;document.getElementById('m-dkg').textContent=tdkg.toLocaleString('fr-FR');
+  document.getElementById('m-hbp').textContent=thbp;document.getElementById('m-hbs').textContent=thbs;
+  document.getElementById('m-hac').textContent=thac;document.getElementById('m-has').textContent=thas;
+}
+
+async function renderAll(){
+  renderWlbl();
+  await renderRec();
+  await renderMuris();
+  await renderDenel();
+  await loadAnanasState();
+  await renderHF();
+}
+
+// ===== BOOT =====
+initDB().then(function(){ renderAll(); });
+</script>
+
+</body>
+</html>
+    
+  </body>
+  
+</html>
