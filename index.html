@@ -107,6 +107,7 @@ input:focus{outline:none;border-color:var(--bd);}
   <button class="tb on" onclick="showTab('rec',event)">&#128230; Reception</button>
   <button class="tb" onclick="showTab('denel',event)">&#127855; Denel</button>
   <button class="tb" onclick="showTab('hf',event)">&#127820; Happy Fruits</button>
+  <button class="tb" onclick="showTab('pesee',event)">&#9878; Pesee</button>
   <button class="tb" onclick="showTab('mois',event)">&#128197; Recap Mensuel</button>
 </div>
 
@@ -251,6 +252,52 @@ input:focus{outline:none;border-color:var(--bd);}
   </div>
 </div>
 
+
+<!-- PESEE -->
+
+<div class="panel" id="panel-pesee">
+  <div class="card">
+    <div class="stitle">&#9878; Pesee des palox - par fournisseur</div>
+    <p style="font-size:0.74rem;color:var(--mu);margin-bottom:14px;">Saisir le nombre de palox et le poids reel pese pour chaque fournisseur.</p>
+    <table>
+      <thead><tr><th></th><th>Fournisseur</th><th>Palox</th><th>Poids reel (kg)</th><th>Poids moy. / palox</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bg">F1</span></td>
+          <td id="pee-f1n" style="font-family:Syne,sans-serif;font-weight:700;">--</td>
+          <td><input type="number" id="pee-p1" class="is" min="0" placeholder="0" oninput="calcPesee()"></td>
+          <td><input type="number" id="pee-k1" class="im" min="0" step="0.1" placeholder="0" oninput="calcPesee()"></td>
+          <td id="pee-m1" style="font-weight:700;color:var(--green)">--</td>
+        </tr>
+        <tr id="pee-row2">
+          <td><span class="badge bb">F2</span></td>
+          <td id="pee-f2n" style="font-family:Syne,sans-serif;font-weight:700;">--</td>
+          <td><input type="number" id="pee-p2" class="is" min="0" placeholder="0" oninput="calcPesee()"></td>
+          <td><input type="number" id="pee-k2" class="im" min="0" step="0.1" placeholder="0" oninput="calcPesee()"></td>
+          <td id="pee-m2" style="font-weight:700;color:var(--blue)">--</td>
+        </tr>
+        <tr class="trow-tot">
+          <td colspan="2" style="font-family:Syne,sans-serif;">TOTAL</td>
+          <td id="pee-totp">--</td>
+          <td id="pee-totk">--</td>
+          <td id="pee-totm">--</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="brow"><button class="btn" onclick="savePesee()">Enregistrer pesee</button></div>
+  </div>
+  <div class="card">
+    <div class="stitle">&#128202; Recap pesee semaine</div>
+    <div class="rgrid">
+      <div class="rc"><div class="v" id="pe-p1">0</div><div class="l">Palox F1</div></div>
+      <div class="rc"><div class="v" id="pe-k1">0</div><div class="l">kg F1</div></div>
+      <div class="rc"><div class="v" id="pe-p2">0</div><div class="l">Palox F2</div></div>
+      <div class="rc"><div class="v" id="pe-k2">0</div><div class="l">kg F2</div></div>
+      <div class="rc"><div class="v" id="pe-tot">0</div><div class="l">Total kg peses</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- HAPPY FRUITS -->
 
 <div class="panel" id="panel-hf">
@@ -294,6 +341,7 @@ input:focus{outline:none;border-color:var(--bd);}
     <div class="mlbl" id="mlbl"></div>
     <button onclick="chM(1)">&#9654;</button>
   </div>
+  <div style="text-align:right;margin-bottom:12px;"><button class="btn" onclick="exportPDF()" style="background:#2980B9;font-size:0.8rem;padding:7px 16px;">&#128424; Exporter PDF</button></div>
   <div class="mgrid">
     <div class="mc"><div class="mv" id="m-bprec">0</div><div class="ml">Palox recus total</div></div>
     <div class="mc acc"><div class="mv" id="m-bf1">0</div><div class="ml">Palox F1</div></div>
@@ -422,9 +470,10 @@ function showTab(id,e){
   document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
   document.getElementById('panel-'+id).classList.add('on');
   if(e&&e.target)e.target.classList.add('on');
-  document.getElementById('wbar').style.display=id==='mois'?'none':'flex';
+  document.getElementById('wbar').style.display=(id==='mois')?'none':'flex';
   if(id==='mois')renderMois();
   if(id==='hf')renderHF();
+  if(id==='pesee')renderPesee();
 }
 
 function chW(d){CW+=d;renderAll();}
@@ -451,8 +500,8 @@ function calcBRec(){
 async function renderRec(){
   var s=await ld('rec',{});
   nbB=s.nbB||2;
-  document.getElementById('b1n').value=s.b1n||'';document.getElementById('b1p').value=s.b1p||'';document.getElementById('b1o').value=s.b1o||'';
-  document.getElementById('b2n').value=s.b2n||'';document.getElementById('b2p').value=s.b2p||'';document.getElementById('b2o').value=s.b2o||'';
+  document.getElementById('b1n').value=s.b1n||'Habitation Ressource';document.getElementById('b1p').value=s.b1p||'';document.getElementById('b1o').value=s.b1o||'';
+  document.getElementById('b2n').value=s.b2n||'Les Musacees de Bassignac';document.getElementById('b2p').value=s.b2p||'';document.getElementById('b2o').value=s.b2o||'';
   setNbB(nbB);
   var al=await ld('alloc',{});
   document.getElementById('al-d').value=al.d||'';document.getElementById('al-h').value=al.h||'';
@@ -669,6 +718,83 @@ function calcHF(s){
   document.getElementById('ha-kg').textContent=(s30*0.03).toFixed(2)+' kg';
 }
 
+
+// ===== PESEE =====
+async function renderPesee(){
+  var rec=await ld('rec',{});
+  var f1n=rec.b1n||'Habitation Ressource';
+  var f2n=rec.b2n||'Les Musacees de Bassignac';
+  document.getElementById('pee-f1n').textContent=f1n;
+  document.getElementById('pee-f2n').textContent=f2n;
+  document.getElementById('pee-row2').style.display=(rec.nbB||2)===1?'none':'';
+  var s=await ld('pesee',{});
+  document.getElementById('pee-p1').value=s.p1||'';
+  document.getElementById('pee-k1').value=s.k1||'';
+  document.getElementById('pee-p2').value=s.p2||'';
+  document.getElementById('pee-k2').value=s.k2||'';
+  calcPesee();
+}
+function calcPesee(){
+  var p1=parseFloat(document.getElementById('pee-p1').value)||0;
+  var k1=parseFloat(document.getElementById('pee-k1').value)||0;
+  var p2=parseFloat(document.getElementById('pee-p2').value)||0;
+  var k2=parseFloat(document.getElementById('pee-k2').value)||0;
+  var totp=p1+p2; var totk=k1+k2;
+  document.getElementById('pee-m1').textContent=p1&&k1?((k1/p1).toFixed(1)+' kg/palox'):'--';
+  document.getElementById('pee-m2').textContent=p2&&k2?((k2/p2).toFixed(1)+' kg/palox'):'--';
+  document.getElementById('pee-totp').textContent=totp?totp+' palox':'--';
+  document.getElementById('pee-totk').textContent=totk?totk.toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('pee-totm').textContent=(totp&&totk)?((totk/totp).toFixed(1)+' kg/palox'):'--';
+  document.getElementById('pe-p1').textContent=p1||0;
+  document.getElementById('pe-k1').textContent=k1?k1.toLocaleString('fr-FR'):0;
+  document.getElementById('pe-p2').textContent=p2||0;
+  document.getElementById('pe-k2').textContent=k2?k2.toLocaleString('fr-FR'):0;
+  document.getElementById('pe-tot').textContent=totk?totk.toLocaleString('fr-FR'):0;
+}
+async function savePesee(){
+  await sv('pesee',{p1:document.getElementById('pee-p1').value,k1:document.getElementById('pee-k1').value,p2:document.getElementById('pee-p2').value,k2:document.getElementById('pee-k2').value});
+  toast('Pesee enregistree !');
+}
+
+// ===== EXPORT PDF =====
+function exportPDF(){
+  var mlbl=document.getElementById('mlbl').textContent;
+  var style='<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1A1A0E;padding:20px;}h1{font-size:18px;color:#2D6A4F;margin-bottom:4px;}h2{font-size:13px;color:#2D6A4F;margin:16px 0 6px;border-bottom:2px solid #F5C518;padding-bottom:3px;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#2D6A4F;color:#fff;padding:6px 8px;text-align:left;font-size:11px;}td{padding:5px 8px;border-bottom:1px solid #E8E0C0;font-size:11px;}.tot td{background:#F0F9F5;font-weight:700;border-top:2px solid #40916C;}.grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}.box{border:1px solid #E8E0C0;border-radius:6px;padding:8px 12px;min-width:120px;text-align:center;}.box .v{font-size:20px;font-weight:800;color:#2D6A4F;}.box .l{font-size:9px;color:#6B6B4A;text-transform:uppercase;}</style>';
+  var m_bprec=document.getElementById('m-bprec').textContent;
+  var m_bf1=document.getElementById('m-bf1').textContent;
+  var m_bf2=document.getElementById('m-bf2').textContent;
+  var m_dp=document.getElementById('m-dp').textContent;
+  var m_dkg=document.getElementById('m-dkg').textContent;
+  var m_hbp=document.getElementById('m-hbp').textContent;
+  var m_hbs=document.getElementById('m-hbs').textContent;
+  var m_hac=document.getElementById('m-hac').textContent;
+  var m_has=document.getElementById('m-has').textContent;
+  var tableRows=document.getElementById('mois-body').innerHTML;
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recap '+mlbl+'</title>'+style+'</head><body>'+
+    '<h1>&#127820; Happy Fruits &mdash; Recap Mensuel</h1>'+
+    '<p style="color:#6B6B4A;font-size:11px;margin-bottom:14px;">'+mlbl+' &bull; Export le '+new Date().toLocaleDateString('fr-FR')+'</p>'+
+    '<h2>Synthese du mois</h2>'+
+    '<div class="grid">'+
+    '<div class="box"><div class="v">'+m_bprec+'</div><div class="l">Palox recus</div></div>'+
+    '<div class="box"><div class="v">'+m_bf1+'</div><div class="l">Palox F1</div></div>'+
+    '<div class="box"><div class="v">'+m_bf2+'</div><div class="l">Palox F2</div></div>'+
+    '<div class="box"><div class="v">'+m_dp+'</div><div class="l">Palox Denel</div></div>'+
+    '<div class="box"><div class="v">'+m_dkg+'</div><div class="l">kg livres Denel</div></div>'+
+    '<div class="box"><div class="v">'+m_hbp+'</div><div class="l">Palox HF Banane</div></div>'+
+    '<div class="box"><div class="v">'+m_hbs+'</div><div class="l">Sachets Banane</div></div>'+
+    '<div class="box"><div class="v">'+m_hac+'</div><div class="l">Colis Ananas</div></div>'+
+    '<div class="box"><div class="v">'+m_has+'</div><div class="l">Sachets Ananas</div></div>'+
+    '</div>'+
+    '<h2>Detail par semaine</h2>'+
+    '<table><thead><tr><th>Semaine</th><th>Palox recus</th><th>F1</th><th>F2</th><th>Palox Denel</th><th>kg Denel</th><th>Palox HF Banane</th><th>Sachets Banane</th><th>Colis Ananas</th><th>Sachets Ananas</th></tr></thead><tbody>'+tableRows+'</tbody></table>'+
+    '</body></html>';
+  var w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
+
 // ===== RECAP MENSUEL =====
 function getWeeksOfMonth(y,m){var d=new Date(y,m,1);var day=d.getDay();d.setDate(d.getDate()-(day===0?6:day-1));var last=new Date(y,m+1,0);var weeks=[];while(d<=last){weeks.push(new Date(d));d=new Date(d);d.setDate(d.getDate()+7);}return weeks;}
 
@@ -711,6 +837,7 @@ async function renderAll(){
   await renderDenel();
   await loadAnanasState();
   await renderHF();
+  await renderPesee();
 }
 
 // ===== BOOT =====
