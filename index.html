@@ -169,7 +169,7 @@ input:focus{outline:none;border-color:var(--bd);}
   <div class="card">
     <div class="stitle">&#127777; Murissage Bananes</div>
     <table>
-      <thead><tr><th>Jour</th><th>Temp. cible</th><th>Temp. reelle</th><th>Fait ✅</th><th>Observations</th></tr></thead>
+      <thead><tr><th>Jour</th><th>Temp. cible</th><th>Temp. reelle</th><th>Degazage</th><th>Observations</th></tr></thead>
       <tbody id="muris-body"></tbody>
     </table>
     <div class="brow"><button class="btn" onclick="saveMuris()">Enregistrer murissage</button></div>
@@ -514,14 +514,28 @@ async function saveAlloc(){await sv('alloc',{d:document.getElementById('al-d').v
 
 // ===== MURISSAGE =====
 async function renderMuris(){
-  var s=await ld('muris',{});var mon=getMon(CW);var body=document.getElementById('muris-body');body.innerHTML='';
+  try {
+    var s=await ld('muris',{});var mon=getMon(CW);var body=document.getElementById('muris-body');
+    if(!body)return;
+    body.innerHTML='';
+    MURIS.forEach(function(m,i){
+      var d=new Date(mon);d.setDate(mon.getDate()+m.o);
+      var sv2=s['r'+i]||{};
+      var dg=m.dg?'<span class="badge by">Oui 10min</span>':'<span style="font-size:0.7rem;color:#bbb">Non</span>';
+      body.innerHTML+='<tr><td><span class="dlbl">'+m.l+'</span><br><span style="font-size:0.66rem;color:var(--mu)">'+fmt(d)+'</span></td><td><span class="tbadge">'+m.t+' °C</span></td><td><input type="number" class="is" id="mt'+i+'" step="0.1" value="'+(sv2.t||'')+'" placeholder="--"></td><td>'+dg+'</td><td><input type="text" id="mo'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td></tr>';
+    });
+  } catch(e){ console.error('renderMuris error:', e); }
+}
+async function saveMuris(){
+  var obj={};
   MURIS.forEach(function(m,i){
-    var d=new Date(mon);d.setDate(mon.getDate()+m.o);
-    var sv2=s['r'+i]||{};
-    var checked=sv2.fait?'checked':'';
-    var rowStyle=sv2.fait?'background:#F0FFF4;':'';
-    body.innerHTML+='<tr style="'+rowStyle+'"><td><span class="dlbl">'+m.l+'</span><br><span style="font-size:0.66rem;color:var(--mu)">'+fmt(d)+'</span></td><td><span class="tbadge">'+m.t+' °C</span></td><td><input type="number" class="is" id="mt'+i+'" step="0.1" value="'+(sv2.t||'')+'" placeholder="--"></td><td style="text-align:center"><input type="checkbox" id="mf'+i+'" '+checked+' style="width:20px;height:20px;cursor:pointer;" onchange="this.closest(\'tr\').style.background=this.checked?\'#F0FFF4\':\'\'"></td><td><input type="text" id="mo'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td></tr>';
+    obj['r'+i]={
+      t:(document.getElementById('mt'+i)||{}).value||'',
+      o:(document.getElementById('mo'+i)||{}).value||''
+    };
   });
+  await sv('muris',obj);
+  toast('Murissage enregistre !');
 }
 async function saveMuris(){
   var obj={};
@@ -742,23 +756,21 @@ function calcHF(s){
 
 // ===== PESEE =====
 async function renderPesee(){
-  var rec=await ld('rec',{});
-  var f1n=rec.b1n||'Habitation Ressource';
-  var f2n=rec.b2n||'Les Musacees de Bassignac';
-  // Noms fournisseurs
-  document.getElementById('pee-f1n').textContent=f1n;
-  document.getElementById('pee-f2n').textContent=f2n;
-  document.getElementById('pee-row2').style.display=(rec.nbB||2)===1?'none':'';
-  // Lier palox auto depuis réception
-  var p1rec=rec.b1p||'';
-  var p2rec=rec.b2p||'';
-  document.getElementById('pee-p1').value=p1rec;
-  document.getElementById('pee-p2').value=p2rec;
-  // Charger poids réels sauvegardés
-  var s=await ld('pesee',{});
-  document.getElementById('pee-k1').value=s.k1||'';
-  document.getElementById('pee-k2').value=s.k2||'';
-  calcPesee();
+  try {
+    var rec=await ld('rec',{});
+    var f1n=rec.b1n||'Habitation Ressource';
+    var f2n=rec.b2n||'Les Musacees de Bassignac';
+    var el;
+    el=document.getElementById('pee-f1n'); if(el)el.textContent=f1n;
+    el=document.getElementById('pee-f2n'); if(el)el.textContent=f2n;
+    el=document.getElementById('pee-row2'); if(el)el.style.display=(rec.nbB||2)===1?'none':'';
+    el=document.getElementById('pee-p1'); if(el)el.value=rec.b1p||'';
+    el=document.getElementById('pee-p2'); if(el)el.value=rec.b2p||'';
+    var s=await ld('pesee',{});
+    el=document.getElementById('pee-k1'); if(el)el.value=s.k1||'';
+    el=document.getElementById('pee-k2'); if(el)el.value=s.k2||'';
+    calcPesee();
+  } catch(e){ console.error('renderPesee:', e); }
 }
 function calcPesee(){
   var p1=parseFloat(document.getElementById('pee-p1').value)||0;
@@ -771,11 +783,6 @@ function calcPesee(){
   document.getElementById('pee-totp').textContent=totp?totp+' palox':'--';
   document.getElementById('pee-totk').textContent=totk?totk.toLocaleString('fr-FR')+' kg':'--';
   document.getElementById('pee-totm').textContent=(totp&&totk)?((totk/totp).toFixed(1)+' kg/palox'):'--';
-  document.getElementById('pe-p1').textContent=p1||0;
-  document.getElementById('pe-k1').textContent=k1?k1.toLocaleString('fr-FR'):0;
-  document.getElementById('pe-p2').textContent=p2||0;
-  document.getElementById('pe-k2').textContent=k2?k2.toLocaleString('fr-FR'):0;
-  document.getElementById('pe-tot').textContent=totk?totk.toLocaleString('fr-FR'):0;
 }
 async function savePesee(){
   await sv('pesee',{p1:document.getElementById('pee-p1').value,k1:document.getElementById('pee-k1').value,p2:document.getElementById('pee-p2').value,k2:document.getElementById('pee-k2').value});
@@ -858,12 +865,12 @@ async function renderMois(){
 
 async function renderAll(){
   renderWlbl();
-  await renderRec();
-  await renderMuris();
-  await renderDenel();
-  await loadAnanasState();
-  await renderHF();
-  await renderPesee();
+  try { await renderRec(); } catch(e){ console.error('renderRec:', e); }
+  try { await renderMuris(); } catch(e){ console.error('renderMuris:', e); }
+  try { await renderDenel(); } catch(e){ console.error('renderDenel:', e); }
+  try { await loadAnanasState(); } catch(e){ console.error('loadAnanasState:', e); }
+  try { await renderHF(); } catch(e){ console.error('renderHF:', e); }
+  try { await renderPesee(); } catch(e){ console.error('renderPesee:', e); }
 }
 
 // ===== BOOT =====
