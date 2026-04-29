@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Happy Fruits">
+<title>Happy Fruits</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --banana:#F5C518;--bd:#D4A017;--green:#2D6A4F;--gl:#40916C;
+  --bg:#F5F7F2;--sf:#FFFFFF;--sf2:#F0F7F4;
+  --tx:#1A1A0E;--mu:#6B6B4A;--br:#E0E8DC;
+  --red:#C0392B;--blue:#2980B9;--sh:0 2px 16px rgba(0,0,0,0.07);
+  --sh2:0 4px 24px rgba(45,106,79,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--tx);min-height:100vh;padding:0 0 60px;padding-top:env(safe-area-inset-top,0px);}
+
+/* HEADER */
+.hdr{background:var(--green);padding:16px 16px 20px;position:relative;overflow:hidden;}
+.hdr::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:40px;background:var(--bg);border-radius:50% 50% 0 0 / 100% 100% 0 0;}
+.hdr-inner{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+.hdr-logo{width:56px;height:56px;border-radius:50%;border:3px solid var(--banana);object-fit:cover;background:#000;flex-shrink:0;}
+.hdr-title{color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-0.5px;line-height:1;}
+.hdr-sub{color:rgba(255,255,255,0.75);font-size:0.72rem;margin-top:2px;}
+.sync-pill{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;margin-top:6px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.25);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#aaa;flex-shrink:0;}
+.sync-dot.ok{background:#2ecc71;}
+.sync-dot.saving{background:var(--banana);animation:pulse 1s infinite;}
+.sync-dot.err{background:#ff6b6b;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* WEEK BAR */
+.wbar{display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 16px 12px;}
+.wbtn{background:var(--green);color:#fff;border:none;border-radius:10px;width:36px;height:36px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);}
+.wlbl{font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;color:var(--tx);text-align:center;flex:1;}
+
+/* TABS */
+.tabs{display:flex;gap:8px;padding:0 12px 16px;justify-content:center;flex-wrap:wrap;}
+.tb{padding:10px 14px;background:var(--sf);border:1.5px solid var(--br);border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--mu);transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:72px;box-shadow:var(--sh);}
+.tb .tb-icon{font-size:1.3rem;}
+.tb.on{background:var(--banana);border-color:var(--bd);color:var(--green);box-shadow:var(--sh2);}
+
+/* PANELS */
+.panel{display:none;padding:0 12px;}.panel.on{display:block;}
+
+/* CARDS */
+.card{background:var(--sf);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--sh);border:1px solid var(--br);}
+.card-green{background:linear-gradient(135deg,#2D6A4F,#40916C);color:#fff;border:none;}
+.card-yellow{background:linear-gradient(135deg,#F5C518,#E6B00E);border:none;}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--sf);border-radius:14px;padding:14px;box-shadow:var(--sh);border:1px solid var(--br);}
+.stat-card .stat-val{font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;color:var(--green);line-height:1;}
+.stat-card .stat-lbl{font-size:0.62rem;color:var(--mu);text-transform:uppercase;letter-spacing:0.5px;margin-top:3px;}
+.stat-card.blue .stat-val{color:var(--blue);}
+.stat-card.yellow .stat-val{color:var(--bd);}
+
+/* SECTION TITLES */
+.stitle{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;margin-bottom:12px;display:flex;align-items:center;gap:7px;color:var(--green);}
+.stitle-bar{width:4px;height:18px;background:var(--banana);border-radius:2px;flex-shrink:0;}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:0.74rem;}
+th{background:var(--green);color:#fff;font-family:'Syne',sans-serif;font-weight:700;padding:9px 8px;text-align:left;font-size:0.7rem;}
+th:first-child{border-radius:8px 0 0 0;}th:last-child{border-radius:0 8px 0 0;}
+td{padding:9px 8px;border-bottom:1px solid var(--br);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:nth-child(even) td{background:#F8FCF9;}
+.trow-tot td{background:#E8F5E9!important;font-weight:700;border-top:2px solid var(--gl);color:var(--green);}
+
+/* INPUTS */
+input[type=number],input[type=text]{font-family:'DM Mono',monospace;font-size:0.74rem;border:1.5px solid var(--br);border-radius:8px;padding:5px 8px;background:#F9FBF9;color:var(--tx);width:100%;transition:border 0.2s;}
+input:focus{outline:none;border-color:var(--gl);background:#fff;}
+input[readonly]{background:#F0F0F0;color:var(--mu);cursor:not-allowed;}
+.is{width:68px;}.im{width:88px;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:700;}
+.bg{background:#D4EDDA;color:#155724;border:1px solid #B8DACC;}
+.bb{background:#D0EAF8;color:#0B4D7A;border:1px solid #90C8EE;}
+.by{background:#FFF3CD;color:#856404;border:1px solid #FFE083;}
+
+/* BUTTONS */
+.btn{background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;box-shadow:var(--sh);transition:all 0.2s;}
+.btn:active{transform:scale(0.97);}
+.btn-yellow{background:var(--banana);color:var(--green);}
+.btn-blue{background:var(--blue);}
+.btn-an{background:var(--bd);}
+.brow{margin-top:13px;}
+
+/* MISC */
+.trow{display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;}
+.tlbl{font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;}
+.ftg{padding:6px 14px;border:2px solid var(--br);background:var(--sf);border-radius:20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;color:var(--mu);transition:all 0.2s;}
+.ftg.on{background:var(--banana);border-color:var(--bd);color:var(--green);}
+.ok{color:var(--green);font-size:0.73rem;font-weight:700;}
+.warn{color:#856404;font-size:0.73rem;font-weight:700;}
+.err{color:var(--red);font-size:0.73rem;font-weight:700;}
+.tbadge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.72rem;font-weight:700;background:#E0F2F1;color:#00695C;border:1px solid #80CBC4;}
+.dlbl{font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;}
+.sfb{padding:5px 13px;border:2px solid var(--br);background:var(--sf);border-radius:20px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;color:var(--mu);transition:all 0.2s;}
+.sfb.on{color:#fff;}
+
+/* RECAP GRID */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px;}
+.rc{background:var(--sf);border:1px solid var(--br);border-radius:12px;padding:12px 10px;text-align:center;box-shadow:var(--sh);}
+.rc .v{font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;color:var(--green);line-height:1;}
+.rc .l{font-size:0.62rem;color:var(--mu);margin-top:3px;text-transform:uppercase;letter-spacing:0.4px;}
+.rc.an .v{color:var(--bd);}
+.rc.bl .v{color:var(--blue);}
+
+/* MONTHLY */
+.mbar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px;}
+.mbar button{background:var(--green);color:#fff;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;}
+.mlbl{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:var(--green);min-width:160px;text-align:center;}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.mc{background:var(--sf);border:1px solid var(--br);border-radius:14px;padding:14px 12px;text-align:center;box-shadow:var(--sh);}
+.mc .mv{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;color:var(--green);line-height:1;}
+.mc .ml{font-size:0.66rem;color:var(--mu);margin-top:4px;text-transform:uppercase;letter-spacing:0.4px;}
+.mc.acc .mv{color:var(--bd);}
+.mc.bl .mv{color:var(--blue);}
+.wdt th{background:#E8F5E9;color:var(--green);font-size:0.68rem;}
+
+/* PROGRESS BAR */
+.prog-wrap{background:var(--br);border-radius:20px;height:10px;overflow:hidden;position:relative;margin:8px 0;}
+.prog-d{position:absolute;left:0;top:0;height:100%;background:var(--blue);border-radius:20px 0 0 20px;transition:width 0.4s;}
+.prog-h{position:absolute;top:0;height:100%;background:var(--banana);transition:width 0.4s,left 0.4s;}
+
+/* FOURNISSEUR BARS */
+.fbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.fbar-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem;flex-shrink:0;}
+.fbar-info{flex:1;}
+.fbar-name{font-size:0.78rem;color:var(--tx);margin-bottom:3px;}
+.fbar-prog{background:var(--br);border-radius:4px;height:6px;overflow:hidden;}
+.fbar-fill{height:6px;border-radius:4px;transition:width 0.4s;}
+.fbar-val{font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;padding:12px 22px;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;opacity:0;transition:all 0.3s;pointer-events:none;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,0.2);white-space:nowrap;}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:400px){.stat-card .stat-val{font-size:1.5rem;}.tb{min-width:64px;font-size:0.72rem;}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-inner">
+    <div style="width:56px;height:56px;border-radius:50%;border:3px solid var(--banana);background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;">🍌</div>
+    <div>
+      <div class="hdr-title">Happy Fruits</div>
+      <div class="hdr-sub">Suivi hebdomadaire de production</div>
+      <div class="sync-pill"><div class="sync-dot" id="sdot"></div><span id="stxt">Connexion...</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEEK BAR -->
+<div class="wbar" id="wbar" style="padding:12px 16px 8px;">
+  <select id="week-select" onchange="chWSelect(this.value)" style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.88rem;color:var(--tx);background:var(--sf);border:2px solid var(--green);border-radius:12px;padding:8px 14px;width:100%;cursor:pointer;box-shadow:var(--sh);">
+  </select>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tb on" onclick="showTab('denel',event)"><span class="tb-icon">🍯</span>Denel</button>
+  <button class="tb" onclick="showTab('hf',event)"><span class="tb-icon">🍌</span>HF</button>
+  <button class="tb" onclick="showTab('ananas',event)"><span class="tb-icon">🍍</span>Ananas</button>
+  <button class="tb" onclick="showTab('rec',event)"><span class="tb-icon">📦</span>Réception</button>
+  <button class="tb" onclick="showTab('repartition',event)"><span class="tb-icon">⚖️</span>Répartition</button>
+  <button class="tb" onclick="showTab('dashboard',event)"><span class="tb-icon">📊</span>Dashboard</button>
+  <button class="tb" onclick="showTab('agenda',event)"><span class="tb-icon">🗓️</span>Agenda</button>
+  <button class="tb" onclick="showTab('mois',event)"><span class="tb-icon">📅</span>Récap</button>
+</div>
+
+<!-- RECEPTION -->
+<div class="panel" id="panel-rec">
+
+  <!-- STATS RAPIDES -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="rec-total-palox">--</div>
+      <div class="stat-lbl">Palox reçus</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="rec-total-kg">--</div>
+      <div class="stat-lbl">Kg estimés</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📦 Réception Bananes — Vendredi</div>
+    <div class="trow">
+      <span class="tlbl">Fournisseurs :</span>
+      <button id="bf1" class="ftg" onclick="setNbB(1)">1 fournisseur</button>
+      <button id="bf2" class="ftg on" onclick="setNbB(2)">2 fournisseurs</button>
+    </div>
+
+    <!-- FOURNISSEUR BARS VISUELLES -->
+    <div id="fbar-container" style="margin-bottom:14px;"></div>
+
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th></th><th>Nom</th><th>Palox</th><th>Kg estimés</th><th>Observations</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bg">F1</span></td>
+          <td><input type="text" id="b1n" placeholder="Fournisseur 1"></td>
+          <td><input type="number" id="b1p" class="is" min="0" placeholder="0" oninput="calcBRec()"></td>
+          <td id="b1kg" style="font-weight:700;color:var(--green)">--</td>
+          <td><input type="text" id="b1o" placeholder="Etat..."></td>
+        </tr>
+        <tr id="rowb2">
+          <td><span class="badge bb">F2</span></td>
+          <td><input type="text" id="b2n" placeholder="Fournisseur 2"></td>
+          <td><input type="number" id="b2p" class="is" min="0" placeholder="0" oninput="calcBRec()"></td>
+          <td id="b2kg" style="font-weight:700;color:var(--blue)">--</td>
+          <td><input type="text" id="b2o" placeholder="Etat..."></td>
+        </tr>
+        <tr class="trow-tot">
+          <td colspan="2" style="font-family:Syne,sans-serif;">TOTAL</td>
+          <td id="btot-p">--</td><td id="btot-kg">--</td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="brow"><button class="btn" onclick="saveRec()">Enregistrer réception</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>⚖️ Pesée — Poids réels</div>
+    <p style="font-size:0.72rem;color:var(--mu);margin-bottom:12px;">Saisir le poids réel pesé par fournisseur.</p>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th></th><th>Fournisseur</th><th>Palox</th><th>Poids brut (kg)</th><th>Poids net (kg)</th><th>Moy. net/palox</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bg">F1</span></td>
+          <td id="pee-f1n" style="font-family:Syne,sans-serif;font-weight:700;font-size:0.75rem;">--</td>
+          <td><input type="number" id="pee-p1" class="is" min="0" placeholder="0" readonly oninput="calcPesee()"></td>
+          <td><input type="number" id="pee-k1" class="im" min="0" step="0.1" placeholder="0" oninput="calcPesee()"></td>
+          <td id="pee-n1" style="font-weight:700;color:var(--green)">--</td>
+          <td id="pee-m1" style="font-weight:700;color:var(--mu)">--</td>
+        </tr>
+        <tr id="pee-row2">
+          <td><span class="badge bb">F2</span></td>
+          <td id="pee-f2n" style="font-family:Syne,sans-serif;font-weight:700;font-size:0.75rem;">--</td>
+          <td><input type="number" id="pee-p2" class="is" min="0" placeholder="0" readonly oninput="calcPesee()"></td>
+          <td><input type="number" id="pee-k2" class="im" min="0" step="0.1" placeholder="0" oninput="calcPesee()"></td>
+          <td id="pee-n2" style="font-weight:700;color:var(--blue)">--</td>
+          <td id="pee-m2" style="font-weight:700;color:var(--mu)">--</td>
+        </tr>
+        <tr class="trow-tot">
+          <td colspan="2" style="font-family:Syne,sans-serif;">TOTAL</td>
+          <td id="pee-totp">--</td><td id="pee-totk">--</td><td id="pee-totn">--</td><td id="pee-totm">--</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div style="font-size:0.68rem;color:var(--mu);margin-top:8px;font-style:italic;">* Poids palox vide = 43 kg. Poids net = Poids brut — (palox × 43 kg)</div>
+    <div class="brow"><button class="btn" onclick="savePesee()">Enregistrer pesée</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>🌡️ Murissage Bananes</div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Jour</th><th>Temp. cible</th><th>Temp. réelle</th><th>Dégazage</th><th>Observations</th></tr></thead>
+      <tbody id="muris-body"></tbody>
+    </table>
+    </div>
+    <div class="brow"><button class="btn" onclick="saveMuris()">Enregistrer murissage</button></div>
+  </div>
+
+
+</div>
+
+<!-- REPARTITION -->
+<div class="panel" id="panel-repartition">
+
+  <!-- STAT CARDS RECAP -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="rp-total-recu">--</div>
+      <div class="stat-lbl">Palox reçus (S-2)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="rp-total-alloue">--</div>
+      <div class="stat-lbl">Total alloué</div>
+    </div>
+  </div>
+
+  <!-- SAISIE REEL -->
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>⚖️ Répartition réelle — Bilan de semaine</div>
+    <p style="font-size:0.72rem;color:var(--mu);margin-bottom:14px;">Vendredi soir — saisis le nombre de palox réellement utilisés cette semaine.</p>
+
+    <!-- Barre de stock -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.8rem;">Palox disponibles (S-2)</span>
+      <span id="rp-stock-lbl" style="font-family:Syne,sans-serif;font-weight:800;color:var(--green);">-- palox</span>
+    </div>
+    <div class="prog-wrap" style="margin-bottom:14px;">
+      <div id="rp-bar-d" class="prog-d" style="width:0%"></div>
+      <div id="rp-bar-h" class="prog-h" style="width:0%;left:0%"></div>
+    </div>
+    <div style="display:flex;gap:14px;font-size:0.68rem;margin-bottom:14px;flex-wrap:wrap;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--blue);border-radius:2px;margin-right:3px;"></span>Denel</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--banana);border-radius:2px;margin-right:3px;"></span>Happy Fruits</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--br);border-radius:2px;margin-right:3px;"></span>Non utilisé</span>
+    </div>
+
+    <!-- Saisie palox réels -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:#E3F2FD;border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:0.65rem;color:var(--blue);font-weight:700;margin-bottom:4px;letter-spacing:0.5px;">🍯 DENEL — Réel</div>
+        <input type="number" id="rp-reel-d" min="0" placeholder="0" oninput="calcRepartition()" style="background:transparent;border:none;font-family:Syne,sans-serif;font-weight:800;font-size:1.8rem;color:var(--blue);text-align:center;width:100%;padding:0;">
+        <div id="rp-dkg" style="font-size:0.65rem;color:var(--blue);margin-top:2px;">--</div>
+      </div>
+      <div style="background:#FFF9E0;border-radius:12px;padding:12px;text-align:center;">
+        <div style="font-size:0.65rem;color:var(--bd);font-weight:700;margin-bottom:4px;letter-spacing:0.5px;">🍌 HAPPY FRUITS — Réel</div>
+        <input type="number" id="rp-reel-h" min="0" placeholder="0" oninput="calcRepartition()" style="background:transparent;border:none;font-family:Syne,sans-serif;font-weight:800;font-size:1.8rem;color:var(--bd);text-align:center;width:100%;padding:0;">
+        <div id="rp-hkg" style="font-size:0.65rem;color:var(--bd);margin-top:2px;">--</div>
+      </div>
+    </div>
+
+    <!-- Total + reste -->
+    <div style="background:#F0F7F4;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.82rem;color:var(--green);">Total utilisé</span>
+      <span id="rp-tot-lbl" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--green);">-- / -- palox</span>
+    </div>
+    <div id="rp-status" style="margin-bottom:14px;"></div>
+    <div class="brow"><button class="btn" onclick="saveRepartition()">✅ Clôturer la semaine</button></div>
+  </div>
+
+  <!-- COMPARAISON REEL VS PREVU -->
+  <div class="card" id="rp-ecarts-card">
+    <div class="stitle"><div class="stitle-bar"></div>📊 Réel vs Prévu</div>
+    <p style="font-size:0.72rem;color:var(--mu);margin-bottom:12px;">Comparaison avec la répartition prévue en début de semaine.</p>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th></th><th>Prévu</th><th>Réel</th><th>Écart</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge bb">Denel</span></td>
+          <td id="rp-prev-d" style="font-weight:700;color:var(--blue)">--</td>
+          <td id="rp-real-d-disp" style="font-weight:700;color:var(--blue)">--</td>
+          <td id="rp-ecart-d">--</td>
+        </tr>
+        <tr>
+          <td><span class="badge by">Happy Fruits</span></td>
+          <td id="rp-prev-h" style="font-weight:700;color:var(--bd)">--</td>
+          <td id="rp-real-h-disp" style="font-weight:700;color:var(--bd)">--</td>
+          <td id="rp-ecart-h">--</td>
+        </tr>
+        <tr class="trow-tot">
+          <td>TOTAL</td>
+          <td id="rp-prev-tot">--</td>
+          <td id="rp-real-tot">--</td>
+          <td id="rp-ecart-tot">--</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- DENEL -->
+<div class="panel on" id="panel-denel">
+  <div id="denel-palox-info"></div>
+  <div id="denel-stock-reel"></div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>🍯 Denel — Suivi quotidien</div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Jour</th><th>Palox épluchés</th><th>Kg estimés</th><th>Kg livrés</th><th>Obs.</th></tr></thead>
+      <tbody id="denel-body"></tbody>
+    </table>
+    </div>
+    <div class="brow"><button class="btn" onclick="saveDenel()">Enregistrer Denel</button></div>
+  </div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📊 Récap semaine Denel</div>
+    <div class="rgrid">
+      <div class="rc bl"><div class="v" id="d-p">0</div><div class="l">Palox épluchés</div></div>
+      <div class="rc bl"><div class="v" id="d-kep">0</div><div class="l">kg estimés</div></div>
+      <div class="rc"><div class="v" id="d-kliv">0</div><div class="l">kg livrés</div></div>
+      <div class="rc" style="background:#E3F2FD;border-color:#90C8EE;"><div class="v" id="d-cout" style="color:var(--blue);">0 €</div><div class="l">Volume activité</div></div>
+    </div>
+    <p style="font-size:0.65rem;color:var(--mu);margin-top:8px;font-style:italic;">* Indicateur volume : 30 €/palox — pas un bénéfice</p>
+  </div>
+</div>
+
+<!-- HAPPY FRUITS -->
+<div class="panel" id="panel-hf">
+  <div id="hf-palox-info"></div>
+  <div class="card" style="padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="font-family:Syne,sans-serif;font-weight:800;font-size:0.85rem;color:var(--green);">🍌 Happy Fruits — Atelier déshydratation</span>
+    </div>
+  </div>
+  <div id="hf-sessions"></div>
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📊 Récap semaine</div>
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.78rem;color:var(--green);margin-bottom:8px;">🍌 Banane</div>
+    <div class="rgrid" style="margin-bottom:14px;">
+      <div class="rc"><div class="v" id="hb-p">0</div><div class="l">Palox épluchés</div></div>
+      <div class="rc"><div class="v" id="hb-s40">0</div><div class="l">Sachets 40g</div></div>
+      <div class="rc"><div class="v" id="hb-s115">0</div><div class="l">Sachets 115g</div></div>
+      <div class="rc"><div class="v" id="hb-s40c">0</div><div class="l">40g cannelle</div></div>
+      <div class="rc"><div class="v" id="hb-s115c">0</div><div class="l">115g cannelle</div></div>
+      <div class="rc"><div class="v" id="hb-tot">0</div><div class="l">Total sachets</div></div>
+      <div class="rc"><div class="v" id="hb-kg">0</div><div class="l">kg produit</div></div>
+      <div class="rc" style="background:#F0F9F5;border-color:#A5D6A7;"><div class="v" id="hb-rdt-s" style="color:var(--gl);">--</div><div class="l">Sachets/palox</div></div>
+      <div class="rc" style="background:#F0F9F5;border-color:#A5D6A7;"><div class="v" id="hb-rdt-k" style="color:var(--gl);">--</div><div class="l">kg/palox</div></div>
+      <div class="rc" style="background:#FFF9E0;border-color:#FFE083;"><div class="v" id="hb-cout" style="color:var(--bd);">0 €</div><div class="l">Volume activité</div></div>
+    </div>
+    <p style="font-size:0.65rem;color:var(--mu);margin-bottom:14px;font-style:italic;">* Indicateur volume : 60 €/palox — pas un bénéfice</p>
+    <div id="recap-an" style="display:none;">
+      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:0.78rem;color:var(--bd);margin-bottom:8px;">🍍 Ananas</div>
+      <div class="rgrid">
+        <div class="rc an"><div class="v" id="ha-c">0</div><div class="l">Colis épluchés</div></div>
+        <div class="rc an"><div class="v" id="ha-s30">0</div><div class="l">Sachets 30g</div></div>
+        <div class="rc an"><div class="v" id="ha-tot">0</div><div class="l">Total sachets</div></div>
+        <div class="rc an"><div class="v" id="ha-kg">0</div><div class="l">kg produit</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANANAS -->
+<div class="panel" id="panel-ananas">
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>🍍 Réception Ananas</div>
+    <div class="trow">
+      <span class="tlbl">Fournisseurs :</span>
+      <button id="af1" class="ftg on" onclick="setNbA(1)">1 fournisseur</button>
+      <button id="af2" class="ftg" onclick="setNbA(2)">2 fournisseurs</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th></th><th>Nom</th><th>Colis</th><th>Poids (x12kg)</th><th>Pièces (x8)</th><th>Obs.</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge by">A1</span></td>
+          <td><input type="text" id="a1n" placeholder="Fournisseur ananas 1"></td>
+          <td><input type="number" id="a1p" class="is" min="0" placeholder="0" oninput="calcARec()"></td>
+          <td id="a1kg" style="font-weight:700;color:var(--bd)">--</td>
+          <td id="a1pc" style="font-weight:700;color:var(--mu)">--</td>
+          <td><input type="text" id="a1o" placeholder="Etat..."></td>
+        </tr>
+        <tr id="rowa2" style="display:none;">
+          <td><span class="badge" style="background:#F9EBEA;color:#7B241C;border:1px solid #F1948A;">A2</span></td>
+          <td><input type="text" id="a2n" placeholder="Fournisseur ananas 2"></td>
+          <td><input type="number" id="a2p" class="is" min="0" placeholder="0" oninput="calcARec()"></td>
+          <td id="a2kg" style="font-weight:700;color:#C0392B">--</td>
+          <td id="a2pc" style="font-weight:700;color:var(--mu)">--</td>
+          <td><input type="text" id="a2o" placeholder="Etat..."></td>
+        </tr>
+        <tr class="trow-tot">
+          <td colspan="2" style="font-family:Syne,sans-serif;">TOTAL ANANAS</td>
+          <td id="atot-c">--</td><td id="atot-kg">--</td><td id="atot-pc">--</td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="brow"><button class="btn btn-an" onclick="saveARec()">Enregistrer réception ananas</button></div>
+  </div>
+
+  <div id="an-sessions"></div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📊 Récap semaine Ananas</div>
+    <div class="rgrid">
+      <div class="rc an"><div class="v" id="ha-c2">0</div><div class="l">Colis épluchés</div></div>
+      <div class="rc an"><div class="v" id="ha-s30-2">0</div><div class="l">Sachets 30g</div></div>
+      <div class="rc an"><div class="v" id="ha-tot2">0</div><div class="l">Total sachets</div></div>
+      <div class="rc an"><div class="v" id="ha-kg2">0</div><div class="l">kg produit</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="panel" id="panel-dashboard">
+
+  <!-- EN-TETE MOIS EN COURS -->
+  <div class="card" style="background:linear-gradient(135deg,#2D6A4F,#40916C);color:#fff;border:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;">📊 Tableau de bord</div>
+        <div id="db-periode" style="font-size:0.72rem;opacity:0.85;margin-top:2px;">Chargement...</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="chDB(-1)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:0.9rem;">◀</button>
+        <button onclick="chDB(1)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:0.9rem;">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS PRINCIPALES -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="db-palox-recus" style="color:var(--green);">--</div>
+      <div class="stat-lbl">Palox reçus</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="db-kg-nets" style="color:var(--green);">--</div>
+      <div class="stat-lbl">Kg nets estimés</div>
+    </div>
+  </div>
+
+  <!-- REPARTITION PALOX -->
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📦 Utilisation des palox</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:#E3F2FD;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:0.65rem;color:var(--blue);margin-bottom:4px;">DENEL</div>
+        <div id="db-palox-denel" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.6rem;color:var(--blue);">--</div>
+        <div id="db-pct-denel" style="font-size:0.65rem;color:var(--blue);">--%</div>
+      </div>
+      <div style="background:#FFF9E0;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:0.65rem;color:var(--bd);margin-bottom:4px;">HAPPY FRUITS</div>
+        <div id="db-palox-hf" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.6rem;color:var(--bd);">--</div>
+        <div id="db-pct-hf" style="font-size:0.65rem;color:var(--bd);">--%</div>
+      </div>
+      <div style="background:#F0F7F4;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:4px;">TOTAL</div>
+        <div id="db-palox-tot" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.6rem;color:var(--green);">--</div>
+        <div style="font-size:0.65rem;color:var(--mu);">semaines</div>
+      </div>
+    </div>
+    <!-- Barre visuelle -->
+    <div style="background:var(--br);border-radius:20px;height:12px;overflow:hidden;position:relative;">
+      <div id="db-bar-d" style="position:absolute;left:0;top:0;height:100%;background:var(--blue);transition:width 0.4s;width:0%;"></div>
+      <div id="db-bar-h" style="position:absolute;top:0;height:100%;background:var(--banana);transition:width 0.4s,left 0.4s;width:0%;left:0%;"></div>
+    </div>
+    <div style="display:flex;gap:12px;font-size:0.68rem;margin-top:8px;">
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--blue);border-radius:2px;margin-right:3px;"></span>Denel</span>
+      <span><span style="display:inline-block;width:8px;height:8px;background:var(--banana);border-radius:2px;margin-right:3px;"></span>Happy Fruits</span>
+    </div>
+  </div>
+
+  <!-- PRODUCTION -->
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>🍌 Production banane séchée</div>
+    <div class="rgrid" style="margin-bottom:12px;">
+      <div class="rc"><div class="v" id="db-sachets-tot" style="color:var(--green);">--</div><div class="l">Total sachets</div></div>
+      <div class="rc"><div class="v" id="db-sachets-40" style="color:var(--mu);">--</div><div class="l">Sachets 40g</div></div>
+      <div class="rc"><div class="v" id="db-sachets-115" style="color:var(--mu);">--</div><div class="l">Sachets 115g</div></div>
+      <div class="rc" style="background:#F0F9F5;"><div class="v" id="db-rdt" style="color:var(--gl);">--</div><div class="l">Moy. sach./palox</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:#E3F2FD;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:0.62rem;color:var(--blue);margin-bottom:4px;">PALOX HF UTILISÉS</div>
+        <div id="db-palox-hf-mois" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.4rem;color:var(--blue);">--</div>
+        <div style="font-size:0.6rem;color:var(--mu);">palox ce mois</div>
+      </div>
+      <div style="background:#FDEDED;border-radius:10px;padding:12px;text-align:center;border:2px solid #F5C6CB;">
+        <div style="font-size:0.62rem;color:var(--red);margin-bottom:4px;">À PAYER FOURNISSEUR</div>
+        <div id="db-paiement-hf" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.4rem;color:var(--red);">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">× 60 €/palox</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DENEL -->
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>🍯 Livraisons Denel</div>
+    <div class="rgrid" style="margin-bottom:12px;">
+      <div class="rc bl"><div class="v" id="db-kg-denel">--</div><div class="l">kg livrés</div></div>
+      <div class="rc bl"><div class="v" id="db-palox-ep">--</div><div class="l">Palox épluchés</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div style="background:#E8F5E9;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:0.62rem;color:#2D6A4F;margin-bottom:4px;">CA DENEL</div>
+        <div id="db-ca-denel" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:#2D6A4F;">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">× 1,15 €/kg</div>
+      </div>
+      <div style="background:#FDEDED;border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:0.62rem;color:var(--red);margin-bottom:4px;">À PAYER FOURNISSEUR</div>
+        <div id="db-frais-denel" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--red);">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">× 30 €/palox</div>
+      </div>
+      <div style="background:#FFF9E0;border-radius:10px;padding:12px;text-align:center;border:2px solid var(--banana);">
+        <div style="font-size:0.62rem;color:var(--bd);margin-bottom:4px;">NET TOUCHÉ</div>
+        <div id="db-net-denel" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--bd);">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">× 1,05 €/kg</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VOLUME ACTIVITE -->
+  <div class="card" style="background:#F8FCF9;border:1px dashed var(--gl);">
+    <div class="stitle"><div class="stitle-bar"></div>💰 Volume d'activité (indicateur)</div>
+    <p style="font-size:0.68rem;color:var(--mu);margin-bottom:12px;font-style:italic;">Indicateur de volume uniquement — pas un bénéfice</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div style="background:#E3F2FD;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.62rem;color:var(--blue);">DENEL</div>
+        <div id="db-cout-denel" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--blue);">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">30 €/palox</div>
+      </div>
+      <div style="background:#FFF9E0;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.62rem;color:var(--bd);">HAPPY FRUITS</div>
+        <div id="db-cout-hf" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--bd);">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">60 €/palox</div>
+      </div>
+      <div style="background:#F0F9F5;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:0.62rem;color:var(--green);">TOTAL</div>
+        <div id="db-cout-tot" style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;color:var(--green);">-- €</div>
+        <div style="font-size:0.6rem;color:var(--mu);">estimé</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- AGENDA -->
+<div class="panel" id="panel-agenda">
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>🗓️ Agenda — Semaines de l'année</div>
+    <p style="font-size:0.72rem;color:var(--mu);margin-bottom:14px;">Appuie sur une semaine pour y accéder directement.</p>
+    <div id="agenda-body"></div>
+  </div>
+</div>
+
+<!-- RECAP MENSUEL -->
+<!-- RAPPORT DENEL -->
+<div class="panel" id="panel-rapport-denel">
+  <div class="card" style="background:linear-gradient(135deg,#185FA5,#2980B9);color:#fff;border:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:Syne,sans-serif;font-weight:800;font-size:1.1rem;">🍯 Rapport mensuel Denel</div>
+        <div id="rapport-periode" style="font-size:0.72rem;opacity:0.85;margin-top:2px;"></div>
+      </div>
+      <button onclick="showTab('mois',event)" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Syne,sans-serif;font-weight:700;font-size:0.78rem;">← Retour</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div class="stat-card">
+      <div class="stat-val" id="rp-palox-d" style="color:#185FA5;">--</div>
+      <div class="stat-lbl">Palox alloués</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="rp-palox-ep" style="color:#185FA5;">--</div>
+      <div class="stat-lbl">Palox épluchés</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="rp-kg" style="color:#185FA5;">--</div>
+      <div class="stat-lbl">Kg livrés</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📋 Détail par semaine</div>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>Semaine</th><th>Dates</th><th>Palox alloués</th><th>Palox épluchés</th><th>Kg livrés</th></tr></thead>
+      <tbody id="rapport-body"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card" style="background:#FFF9E6;border:1px solid #FFE083;">
+    <p style="font-size:0.72rem;color:#856404;font-style:italic;">⚠️ Ce rapport couvre uniquement les palox transformés et livrés ce mois. Le stock vert ou en murissage nest pas calculable en temps réel.</p>
+  </div>
+
+  <div style="text-align:center;margin-top:4px;">
+    <button class="btn btn-blue" onclick="window.print()" style="font-size:0.85rem;padding:11px 28px;">🖨️ Imprimer / Partager</button>
+  </div>
+</div>
+
+<div class="panel" id="panel-mois">
+  <div class="mbar">
+    <button onclick="chM(-1)">&#9664;</button>
+    <div class="mlbl" id="mlbl"></div>
+    <button onclick="chM(1)">&#9654;</button>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px;">
+    <button class="btn btn-blue" onclick="exportPDF()" style="font-size:0.78rem;padding:8px 16px;">📄 Récap PDF</button>
+    <button class="btn" onclick="showRapportDenel()" style="font-size:0.78rem;padding:8px 16px;background:#185FA5;">🍯 Rapport Denel</button>
+  </div>
+  <div id="m-alertes" style="margin-bottom:14px;"></div>
+  <div class="mgrid">
+    <div class="mc"><div class="mv" id="m-bprec">0</div><div class="ml">Palox reçus</div></div>
+    <div class="mc acc"><div class="mv" id="m-bf1">0</div><div class="ml">Palox F1</div></div>
+    <div class="mc acc"><div class="mv" id="m-bf2">0</div><div class="ml">Palox F2</div></div>
+    <div class="mc bl"><div class="mv" id="m-dp">0</div><div class="ml">Palox Denel</div></div>
+    <div class="mc bl"><div class="mv" id="m-dkg">0</div><div class="ml">kg livrés Denel</div></div>
+    <div class="mc"><div class="mv" id="m-hbp">0</div><div class="ml">Palox HF Banane</div></div>
+    <div class="mc"><div class="mv" id="m-hbs">0</div><div class="ml">Sachets Banane</div></div>
+    <div class="mc acc"><div class="mv" id="m-hac">0</div><div class="ml">Colis Ananas</div></div>
+    <div class="mc acc"><div class="mv" id="m-has">0</div><div class="ml">Sachets Ananas</div></div>
+  </div>
+  <div class="card" id="m-stats-card">
+    <div class="stitle"><div class="stitle-bar"></div>📈 Statistiques du mois</div>
+    <div class="rgrid">
+      <div class="rc"><div class="v" id="m-taux-denel">--%</div><div class="l">% transformé Denel</div></div>
+      <div class="rc"><div class="v" id="m-taux-hf">--%</div><div class="l">% transformé HF</div></div>
+      <div class="rc"><div class="v" id="m-moy-f1">-- kg</div><div class="l">Moy kg/palox F1</div></div>
+      <div class="rc"><div class="v" id="m-moy-f2">-- kg</div><div class="l">Moy kg/palox F2</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="stitle"><div class="stitle-bar"></div>📋 Détail par semaine</div>
+    <div style="overflow-x:auto;">
+      <table class="wdt">
+        <thead><tr><th>Semaine</th><th>Palox reçus</th><th>F1</th><th>F2</th><th>Palox Denel</th><th>kg Denel</th><th>Palox HF</th><th>Sachets</th><th>Colis An.</th><th>Sachets An.</th></tr></thead>
+        <tbody id="mois-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+
+
+
+<script>
+
+// ===== SUPABASE SETUP =====
+const { createClient } = supabase;
+const DB = createClient('https://bhdzmcbbrkbmkuqhyyrc.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJoZHptY2JicmtibWt1cWh5eXJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3NjE3NTgsImV4cCI6MjA5MTMzNzc1OH0.hcr_4g9Y7aDYYE8f-YnxUGgFR6Ug5Sz9xHKpbvpvxzE');
+
+var CW=0, CM=0, nbB=2, nbA=1, ananasOn=false;
+var MFR=['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'];
+var MURIS=[{o:-2,l:'Samedi',t:18,dg:false},{o:-1,l:'Dimanche',t:18,dg:true},{o:0,l:'Lundi',t:18,dg:false},{o:1,l:'Mardi',t:16.5,dg:false},{o:2,l:'Mercredi',t:15.5,dg:false},{o:3,l:'Jeudi',t:14.5,dg:false},{o:4,l:'Vendredi',t:14.5,dg:false}];
+var DENEL=[{o:0,l:'Lundi'},{o:1,l:'Mardi'},{o:2,l:'Mercredi'},{o:3,l:'Jeudi'},{o:4,l:'Vendredi'}];
+var SESS=[{eo:0,el:'Lundi',so:1,sl:'Mardi'},{eo:2,el:'Mercredi',so:3,sl:'Jeudi'}];
+
+// ===== SYNC STATUS =====
+function syncStatus(state, txt) {
+  var dot = document.getElementById('sdot');
+  var stxt = document.getElementById('stxt');
+  dot.className = 'sync-dot ' + state;
+  stxt.textContent = txt;
+}
+
+// ===== SUPABASE HELPERS =====
+async function dbLoad(section, wk) {
+  try {
+    var key = wk || wkey();
+    var {data, error} = await DB.from('hf_data').select('data').eq('wkey', key).eq('section', section).single();
+    if (error || !data) return {};
+    return data.data || {};
+  } catch(e) { return {}; }
+}
+
+async function dbSave(section, val, wk) {
+  try {
+    syncStatus('saving', 'Sauvegarde...');
+    var key = wk || wkey();
+    var {error} = await DB.from('hf_data').upsert({wkey: key, section: section, data: val, updated_at: new Date().toISOString()}, {onConflict: 'wkey,section'});
+    if (error) throw error;
+    syncStatus('ok', 'Synchronise');
+  } catch(e) {
+    syncStatus('err', 'Erreur sync');
+    console.error(e);
+  }
+}
+
+// ===== INIT TABLE =====
+async function initDB() {
+  syncStatus('saving', 'Connexion...');
+  try {
+    var {error} = await DB.from('hf_data').select('wkey').limit(1);
+    if (error && error.code === '42P01') {
+      // Table doesn't exist - show instructions
+      syncStatus('err', 'Table manquante - voir console');
+      console.log('Cree la table dans Supabase SQL Editor:\n' +
+        'CREATE TABLE hf_data (\n' +
+        '  id SERIAL PRIMARY KEY,\n' +
+        '  wkey TEXT NOT NULL,\n' +
+        '  section TEXT NOT NULL,\n' +
+        '  data JSONB,\n' +
+        '  updated_at TIMESTAMPTZ DEFAULT NOW(),\n' +
+        '  UNIQUE(wkey, section)\n' +
+        ');\n' +
+        'ALTER TABLE hf_data DISABLE ROW LEVEL SECURITY;'
+      );
+    } else {
+      syncStatus('ok', 'Connecte');
+    }
+  } catch(e) {
+    syncStatus('err', 'Hors ligne');
+  }
+}
+
+// ===== CACHE LOCAL pour offline =====
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function lsGet(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+
+async function ld(section, def, wk) {
+  var key = (wk||wkey()) + '_' + section;
+  var cached = lsGet(key, null);
+  try {
+    var dbVal = await dbLoad(section, wk||wkey());
+    if (dbVal && Object.keys(dbVal).length > 0) {
+      lsSet(key, dbVal);
+      return dbVal;
+    }
+  } catch(e) {}
+  return cached || def;
+}
+
+async function sv(section, val, wk) {
+  var key = (wk||wkey()) + '_' + section;
+  lsSet(key, val);
+  await dbSave(section, val, wk);
+}
+
+// ===== DATE UTILS =====
+function getMon(woff){var d=new Date();var day=d.getDay();d.setDate(d.getDate()-(day===0?6:day-1)+woff*7);d.setHours(0,0,0,0);return d;}
+function isoW(d){var t=new Date(d);t.setDate(t.getDate()+3-(t.getDay()+6)%7);var w=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-w)/86400000-3+(w.getDay()+6)%7)/7);}
+function wkey(woff){var m=getMon(woff==null?CW:woff);return m.getFullYear()+'-W'+String(isoW(m)).padStart(2,'0');}
+function fmt(d){return d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2000);}
+
+function showTab(id,e){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('panel-'+id).classList.add('on');
+  if(e&&e.target)e.target.classList.add('on');
+  document.getElementById('wbar').style.display=(id==='mois'||id==='dashboard'||id==='agenda')?'none':'flex';
+  if(id==='mois')renderMois();
+  if(id==='hf')renderHF();
+  if(id==='ananas'){renderARec();renderAnSessions();}
+  if(id==='agenda')renderAgenda();
+  if(id==='dashboard')renderDashboard();
+  if(id==='repartition')renderRepartition();
+}
+
+function chW(d){CW+=d;renderAll();}
+function chM(d){CM+=d;renderMois();}
+
+function renderWlbl(){
+  var sel=document.getElementById('week-select');
+  if(!sel)return;
+  sel.innerHTML='';
+  // Générer 20 semaines passées + 4 futures
+  for(var w=-20;w<=4;w++){
+    var mon=getMon(w);
+    var fri=new Date(mon);fri.setDate(mon.getDate()+4);
+    var semNum=String(isoW(mon)).padStart(2,'0');
+    var label='Sem '+semNum+' — Lun '+mon.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' au Ven '+fri.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+    var opt=document.createElement('option');
+    opt.value=w;
+    opt.textContent=label;
+    if(w===CW)opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+
+function chWSelect(val){
+  CW=parseInt(val);
+  renderAll();
+}
+
+// ===== RECEPTION BANANES =====
+function setNbB(n){nbB=n;document.getElementById('bf1').classList.toggle('on',n===1);document.getElementById('bf2').classList.toggle('on',n===2);document.getElementById('rowb2').style.display=n===1?'none':'';if(n===1)document.getElementById('b2p').value='';calcBRec();}
+function calcBRec(){
+  var p1=parseInt(document.getElementById('b1p').value)||0;
+  var p2=nbB===2?(parseInt(document.getElementById('b2p').value)||0):0;
+  var tot=p1+p2;
+  document.getElementById('b1kg').textContent=p1?(p1*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('b2kg').textContent=p2?(p2*300).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('btot-p').textContent=tot?tot+' palox':'--';
+  document.getElementById('btot-kg').textContent=tot?(tot*300).toLocaleString('fr-FR')+' kg':'--';
+  // Stat cards
+  var el1=document.getElementById('rec-total-palox');if(el1)el1.textContent=tot||'--';
+  var el2=document.getElementById('rec-total-kg');if(el2)el2.textContent=tot?(tot*300).toLocaleString('fr-FR'):'--';
+  // Barres fournisseurs
+  var fc=document.getElementById('fbar-container');
+  if(fc&&tot>0){
+    var n1=document.getElementById('b1n').value||'Habitation Ressource';
+    var n2=document.getElementById('b2n').value||'Les Musacées de Bassignac';
+    var w1=tot>0?Math.round((p1/tot)*100):0;
+    var w2=tot>0?Math.round((p2/tot)*100):0;
+    var bars='<div class="fbar"><div class="fbar-avatar" style="background:#D4EDDA;color:#155724;">F1</div><div class="fbar-info"><div class="fbar-name">'+n1+'</div><div class="fbar-prog"><div class="fbar-fill" style="width:'+w1+'%;background:var(--green);"></div></div></div><div class="fbar-val" style="color:var(--green)">'+p1+' palox</div></div>';
+    if(nbB===2)bars+='<div class="fbar"><div class="fbar-avatar" style="background:#D0EAF8;color:#0B4D7A;">F2</div><div class="fbar-info"><div class="fbar-name">'+n2+'</div><div class="fbar-prog"><div class="fbar-fill" style="width:'+w2+'%;background:var(--blue);"></div></div></div><div class="fbar-val" style="color:var(--blue)">'+p2+' palox</div></div>';
+    fc.innerHTML=bars;
+  }
+  calcAlloc();
+}
+async function renderRec(){
+  var s=await ld('rec',{});
+  nbB=s.nbB||2;
+  document.getElementById('b1n').value=s.b1n||'Habitation Ressource';document.getElementById('b1p').value=s.b1p||'';document.getElementById('b1o').value=s.b1o||'';
+  document.getElementById('b2n').value=s.b2n||'Les Musacees de Bassignac';document.getElementById('b2p').value=s.b2p||'';document.getElementById('b2o').value=s.b2o||'';
+  setNbB(nbB);
+  calcBRec();
+  await renderPesee();
+}
+async function saveRec(){
+  await sv('rec',{nbB:nbB,b1n:document.getElementById('b1n').value,b1p:document.getElementById('b1p').value,b1o:document.getElementById('b1o').value,b2n:document.getElementById('b2n').value,b2p:document.getElementById('b2p').value,b2o:document.getElementById('b2o').value});
+  calcAlloc();
+  await renderPesee();
+  toast('Reception enregistree !');
+}
+
+// ===== REPARTITION (ancienne alloc — compatibilité Denel stock) =====
+function calcAlloc(){
+  // Les inputs al-d/al-h ont été déplacés dans l'onglet Répartition
+  // Cette fonction est conservée pour compatibilité mais n'affiche plus rien ici
+}
+async function saveAlloc(){await sv('alloc',{d:document.getElementById('al-d').value,h:document.getElementById('al-h').value});toast('Repartition enregistree !');}
+
+// ===== ONGLET REPARTITION =====
+async function renderRepartition(){
+  // Palox reçus S-2
+  var recPrev=await ld('rec',{},wkey(CW-2));
+  var p1=parseInt(recPrev.b1p)||0;
+  var p2=parseInt(recPrev.b2p)||0;
+  var totRecu=p1+p2;
+
+  // Prévu (alloc de la même semaine de travail = CW)
+  var allocData=await ld('alloc',{});
+  var prevD=parseInt(allocData.d)||0;
+  var prevH=parseInt(allocData.h)||0;
+
+  // Réel déjà sauvegardé
+  var reelData=await ld('repartition',{});
+  var reelD=parseInt(reelData.d)||0;
+  var reelH=parseInt(reelData.h)||0;
+
+  // Mise à jour stat cards header
+  var el;
+  el=document.getElementById('rp-total-recu');if(el)el.textContent=totRecu||'--';
+  el=document.getElementById('rp-total-alloue');if(el)el.textContent=(reelD+reelH)||(prevD+prevH)||'--';
+
+  // Barre stock
+  el=document.getElementById('rp-stock-lbl');if(el)el.textContent=totRecu+' palox';
+
+  // Remplir les inputs
+  var inD=document.getElementById('rp-reel-d');
+  var inH=document.getElementById('rp-reel-h');
+  if(inD)inD.value=reelD||'';
+  if(inH)inH.value=reelH||'';
+
+  // Stocker totRecu et prévus dans data attrs pour calcRepartition
+  if(inD){inD.dataset.tot=totRecu;inD.dataset.prevD=prevD;inD.dataset.prevH=prevH;}
+
+  calcRepartition();
+}
+
+function calcRepartition(){
+  var inD=document.getElementById('rp-reel-d');
+  var inH=document.getElementById('rp-reel-h');
+  if(!inD||!inH)return;
+  var totRecu=parseInt(inD.dataset.tot)||0;
+  var prevD=parseInt(inD.dataset.prevD)||0;
+  var prevH=parseInt(inD.dataset.prevH)||0;
+  var rd=parseInt(inD.value)||0;
+  var rh=parseInt(inH.value)||0;
+  var sum=rd+rh;
+  var reste=totRecu-sum;
+
+  // kg display
+  var el;
+  el=document.getElementById('rp-dkg');if(el)el.textContent=rd?(rd*300).toLocaleString('fr-FR')+' kg':'--';
+  el=document.getElementById('rp-hkg');if(el)el.textContent=rh?(rh*300).toLocaleString('fr-FR')+' kg':'--';
+
+  // Total label
+  el=document.getElementById('rp-tot-lbl');if(el)el.textContent=(sum||'0')+' / '+totRecu+' palox';
+
+  // Barre progression
+  var pd=totRecu>0?(rd/totRecu)*100:0;
+  var ph=totRecu>0?(rh/totRecu)*100:0;
+  el=document.getElementById('rp-bar-d');if(el)el.style.width=Math.min(pd,100)+'%';
+  el=document.getElementById('rp-bar-h');if(el){el.style.left=pd+'%';el.style.width=Math.min(ph,100-pd)+'%';}
+
+  // Status
+  var status='';
+  if(sum===0){status='';}
+  else if(sum>totRecu){status='<span class="err">⚠️ Dépassement de '+(sum-totRecu)+' palox !</span>';}
+  else if(reste===0){status='<span class="ok">✅ Tous les palox utilisés</span>';}
+  else{status='<span class="warn">⏳ '+reste+' palox non utilisés</span>';}
+  el=document.getElementById('rp-status');if(el)el.innerHTML=status;
+
+  // Tableau écarts
+  var ecD=rd-prevD; var ecH=rh-prevH; var ecTot=(rd+rh)-(prevD+prevH);
+  function ecartHtml(e){
+    if(e===0)return '<span class="ok">= 0</span>';
+    return e>0?'<span style="color:var(--blue);font-weight:700;">+'+e+'</span>':'<span class="err">'+e+'</span>';
+  }
+  el=document.getElementById('rp-prev-d');if(el)el.textContent=prevD+' palox';
+  el=document.getElementById('rp-prev-h');if(el)el.textContent=prevH+' palox';
+  el=document.getElementById('rp-prev-tot');if(el)el.textContent=(prevD+prevH)+' palox';
+  el=document.getElementById('rp-real-d-disp');if(el)el.textContent=rd+' palox';
+  el=document.getElementById('rp-real-h-disp');if(el)el.textContent=rh+' palox';
+  el=document.getElementById('rp-real-tot');if(el)el.textContent=sum+' palox';
+  el=document.getElementById('rp-ecart-d');if(el)el.innerHTML=ecartHtml(ecD);
+  el=document.getElementById('rp-ecart-h');if(el)el.innerHTML=ecartHtml(ecH);
+  el=document.getElementById('rp-ecart-tot');if(el)el.innerHTML=ecartHtml(ecTot);
+}
+
+async function saveRepartition(){
+  var d=document.getElementById('rp-reel-d').value;
+  var h=document.getElementById('rp-reel-h').value;
+  // Aussi sync dans alloc pour compatibilité avec Denel/HF stock display
+  await sv('repartition',{d:d,h:h});
+  await sv('alloc',{d:d,h:h});
+  toast('Semaine clôturée ✅');
+}
+// ===== MURISSAGE =====
+async function renderMuris(){
+  try {
+    var s=await ld('muris',{});var mon=getMon(CW);var body=document.getElementById('muris-body');
+    if(!body)return;
+    body.innerHTML='';
+    MURIS.forEach(function(m,i){
+      var d=new Date(mon);d.setDate(mon.getDate()+m.o);
+      var sv2=s['r'+i]||{};
+      var dg=m.dg?'<span class="badge by">Oui 10min</span>':'<span style="font-size:0.7rem;color:#bbb">Non</span>';
+      body.innerHTML+='<tr><td><span class="dlbl">'+m.l+'</span><br><span style="font-size:0.66rem;color:var(--mu)">'+fmt(d)+'</span></td><td><span class="tbadge">'+m.t+' °C</span></td><td><input type="number" class="is" id="mt'+i+'" step="0.1" value="'+(sv2.t||'')+'" placeholder="--"></td><td>'+dg+'</td><td><input type="text" id="mo'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td></tr>';
+    });
+  } catch(e){ console.error('renderMuris error:', e); }
+}
+async function saveMuris(){
+  var obj={};
+  MURIS.forEach(function(m,i){
+    obj['r'+i]={
+      t:(document.getElementById('mt'+i)||{}).value||'',
+      o:(document.getElementById('mo'+i)||{}).value||''
+    };
+  });
+  await sv('muris',obj);
+  toast('Murissage enregistre !');
+}
+
+
+// ===== ANANAS RECEPTION =====
+function setNbA(n){nbA=n;document.getElementById('af1').classList.toggle('on',n===1);document.getElementById('af2').classList.toggle('on',n===2);document.getElementById('rowa2').style.display=n===1?'none':'';if(n===1)document.getElementById('a2p').value='';calcARec();}
+function calcARec(){
+  var p1=parseInt(document.getElementById('a1p').value)||0;
+  var p2=nbA===2?(parseInt(document.getElementById('a2p').value)||0):0;
+  var tot=p1+p2;
+  document.getElementById('a1kg').textContent=p1?(p1*12).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('a1pc').textContent=p1?(p1*8)+' pcs':'--';
+  document.getElementById('a2kg').textContent=p2?(p2*12).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('a2pc').textContent=p2?(p2*8)+' pcs':'--';
+  document.getElementById('atot-c').textContent=tot?tot+' colis':'--';
+  document.getElementById('atot-kg').textContent=tot?(tot*12).toLocaleString('fr-FR')+' kg':'--';
+  document.getElementById('atot-pc').textContent=tot?(tot*8)+' pcs':'--';
+}
+async function renderARec(){
+  var s=await ld('arec',{});nbA=s.nbA||1;
+  document.getElementById('a1n').value=s.a1n||'';document.getElementById('a1p').value=s.a1p||'';document.getElementById('a1o').value=s.a1o||'';
+  document.getElementById('a2n').value=s.a2n||'';document.getElementById('a2p').value=s.a2p||'';document.getElementById('a2o').value=s.a2o||'';
+  document.getElementById('af1').classList.toggle('on',nbA===1);
+  document.getElementById('af2').classList.toggle('on',nbA===2);
+  document.getElementById('rowa2').style.display=nbA===1?'none':'';
+  calcARec();
+}
+async function saveARec(){
+  await sv('arec',{nbA:nbA,a1n:document.getElementById('a1n').value,a1p:document.getElementById('a1p').value,a1o:document.getElementById('a1o').value,a2n:document.getElementById('a2n').value,a2p:document.getElementById('a2p').value,a2o:document.getElementById('a2o').value});
+  toast('Réception ananas enregistrée !');
+}
+
+// ===== ANANAS SESSIONS =====
+async function renderAnSessions(){
+  var container=document.getElementById('an-sessions');
+  if(!container)return;
+  var s=await ld('hf',{});var mon=getMon(CW);
+  var ac=0,s30=0;
+  container.innerHTML='';
+  SESS.forEach(function(ss,i){
+    var sv2=s['r'+i]||{};
+    var fruit=sv2.fruit||'banane';
+    if(fruit!=='ananas')return;
+    var de=new Date(mon);de.setDate(mon.getDate()+ss.eo);
+    var c2=sv2.anp?parseInt(sv2.anp):0;
+    container.innerHTML+=
+      '<div class="card" style="border-left:4px solid var(--bd)">'+
+      '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:0.9rem;color:var(--bd);margin-bottom:10px;">Session '+(i+1)+' — '+ss.el+' <span style="font-size:0.68rem;color:var(--mu);font-weight:400;">Épluchage '+fmt(de)+'</span></div>'+
+      '<div style="overflow-x:auto;"><table><thead><tr><th>Colis</th><th>Kg nets (x12)</th><th>Pièces (x8)</th><th>Sachets 30g</th><th>Obs.</th></tr></thead><tbody><tr>'+
+      '<td><input type="number" class="is" id="ac'+i+'" value="'+(sv2.anp||'')+'" placeholder="0" min="0" oninput="calcAnSess()"></td>'+
+      '<td id="ake'+i+'" style="font-weight:700;color:var(--bd)">'+(c2?c2*12+' kg':'--')+'</td>'+
+      '<td id="apc'+i+'" style="font-weight:700;color:var(--mu)">'+(c2?c2*8+' pcs':'--')+'</td>'+
+      '<td><input type="number" class="is" id="a30-'+i+'" value="'+(sv2.s30||'')+'" placeholder="0" oninput="calcAnSess()"></td>'+
+      '<td><input type="text" id="ao'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td>'+
+      '</tr></tbody></table></div>'+
+      '<div class="brow"><button class="btn btn-an" onclick="saveAnSess('+i+')">Enregistrer session '+(i+1)+'</button></div>'+
+      '</div>';
+  });
+  if(!container.innerHTML){
+    container.innerHTML='<div class="card" style="text-align:center;color:var(--mu);font-style:italic;padding:20px;">Aucune session ananas cette semaine.<br><br><button class="btn btn-an" onclick="setSF(0,&quot;ananas&quot;);renderAnSessions();" style="font-size:0.8rem;padding:8px 16px;">+ Ajouter session ananas</button></div>';
+  }
+  calcAnSess(s);
+}
+
+function calcAnSess(s){
+  s=s||{};
+  var ac=0,s30=0;
+  SESS.forEach(function(ss,i){
+    var d=s['r'+i]||{};
+    if((d.fruit||'banane')!=='ananas')return;
+    var a=parseInt((document.getElementById('ac'+i)||{}).value)||parseInt(d.anp)||0;ac+=a;
+    if(document.getElementById('ake'+i))document.getElementById('ake'+i).textContent=a?a*12+' kg':'--';
+    if(document.getElementById('apc'+i))document.getElementById('apc'+i).textContent=a?a*8+' pcs':'--';
+    s30+=parseInt((document.getElementById('a30-'+i)||{}).value)||0;
+  });
+  var el;
+  el=document.getElementById('ha-c2');if(el)el.textContent=ac;
+  el=document.getElementById('ha-s30-2');if(el)el.textContent=s30;
+  el=document.getElementById('ha-tot2');if(el)el.textContent=s30;
+  el=document.getElementById('ha-kg2');if(el)el.textContent=(s30*0.03).toFixed(2)+' kg';
+}
+
+async function saveAnSess(i){
+  var s=await ld('hf',{});
+  if(!s['r'+i])s['r'+i]={};
+  s['r'+i].fruit='ananas';
+  s['r'+i].anp=(document.getElementById('ac'+i)||{}).value||'';
+  s['r'+i].s30=(document.getElementById('a30-'+i)||{}).value||'';
+  s['r'+i].o=(document.getElementById('ao'+i)||{}).value||'';
+  await sv('hf',s);
+  toast('Session ananas enregistrée !');
+}
+
+// ===== ANANAS ACTIVATION =====
+async function activateAnanas(){
+  ananasOn=true;
+  await sv('ananas_on',{on:true});
+  toast('Suivi ananas activé !');
+}
+async function loadAnanasState(){
+  try {
+    var s=await ld('ananas_on',{});
+    ananasOn=s.on===true;
+  } catch(e){ console.error('loadAnanasState:', e); }
+}
+
+// ===== DENEL =====
+async function renderDenel(){
+  // Palox reçus 2 semaines avant
+  var recPrev=await ld('rec',{},wkey(CW-2));
+  var p1prev=parseInt(recPrev.b1p)||0;var p2prev=parseInt(recPrev.b2p)||0;
+  var totPrev=p1prev+p2prev;
+  var monPrev=getMon(CW-2);var venPrev=new Date(monPrev);venPrev.setDate(monPrev.getDate()+4);
+  var semPrev=isoW(monPrev);
+  var n1prev=recPrev.b1n||'Habitation Ressource';var n2prev=recPrev.b2n||'Les Musacées de Bassignac';
+  var paloxInfo=document.getElementById('denel-palox-info');
+  if(paloxInfo){
+    if(totPrev>0){
+      paloxInfo.innerHTML='<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:0.78rem;"><span style="font-family:Syne,sans-serif;font-weight:800;color:var(--green);">📦 Palox disponibles : '+totPrev+' palox</span><br><span style="color:var(--mu);">Reçus le '+venPrev.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' — Sem '+String(semPrev).padStart(2,'0')+' ('+n1prev+' : '+p1prev+' | '+n2prev+' : '+p2prev+')</span></div>';
+    } else {
+      paloxInfo.innerHTML='<div style="background:#FFF9E6;border:1px solid var(--br);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:0.78rem;color:var(--mu);font-style:italic;">⚠️ Aucune réception enregistrée pour la sem '+String(semPrev).padStart(2,'0')+'</div>';
+    }
+  }
+  // Stock temps réel = palox reçus - palox déjà épluchés cette semaine
+  var s=await ld('denel',{});var mon=getMon(CW);
+  var dejaPluches=0;
+  for(var k=0;k<5;k++){dejaPluches+=parseInt((s['r'+k]||{}).p)||0;}
+  var allocData=await ld('alloc',{});
+  var paloxDenel=parseInt(allocData.d)||0;
+  var restant=paloxDenel-dejaPluches;
+  var stockEl=document.getElementById('denel-stock-reel');
+  if(stockEl && paloxDenel>0){
+    var couleur=restant<0?'#FDEDED':restant===0?'#E8F5E9':'#E3F2FD';
+    var bordure=restant<0?'#F5C6CB':restant===0?'#A5D6A7':'#90C8EE';
+    var icone=restant<0?'🔴':restant===0?'✅':'🔵';
+    stockEl.innerHTML='<div style="background:'+couleur+';border:1px solid '+bordure+';border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;">'+icone+' <span style="font-family:Syne,sans-serif;font-weight:800;">Stock Denel cette semaine : '+restant+' palox restants</span> <span style="color:var(--mu);">('+paloxDenel+' alloués — '+dejaPluches+' épluchés)</span>'+(restant<0?'<br><span style="color:var(--red);font-weight:700;">⚠️ Dépassement de '+Math.abs(restant)+' palox !</span>':'')+'</div>';
+  } else if(stockEl){
+    stockEl.innerHTML='';
+  }
+  var body=document.getElementById('denel-body');body.innerHTML='';
+  DENEL.forEach(function(dd,i){
+    var d=new Date(mon);d.setDate(mon.getDate()+dd.o);
+    var sv2=s['r'+i]||{};
+    body.innerHTML+='<tr><td><span class="dlbl">'+dd.l+'</span><br><span style="font-size:0.66rem;color:var(--mu)">'+fmt(d)+'</span></td><td><input type="number" class="is" id="dp'+i+'" value="'+(sv2.p||'')+'" placeholder="0" min="0" oninput="calcDenel()"></td><td id="dke'+i+'" style="font-weight:700;color:var(--green)">'+(sv2.p?(parseInt(sv2.p)*300).toLocaleString('fr-FR')+' kg':'--')+'</td><td><input type="number" class="im" id="dl'+i+'" value="'+(sv2.l||'')+'" placeholder="0" oninput="calcDenel()"></td><td><input type="text" id="do'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td></tr>';
+  });
+  calcDenel();
+}
+function calcDenel(){
+  var p=0,kl=0;
+  DENEL.forEach(function(dd,i){
+    var pi=parseInt((document.getElementById('dp'+i)||{}).value)||0;p+=pi;
+    if(document.getElementById('dke'+i))document.getElementById('dke'+i).textContent=pi?(pi*300).toLocaleString('fr-FR')+' kg':'--';
+    kl+=parseFloat((document.getElementById('dl'+i)||{}).value)||0;
+  });
+  var _d;
+  _d=document.getElementById('d-p');if(_d)_d.textContent=p;
+  _d=document.getElementById('d-kep');if(_d)_d.textContent=(p*300).toLocaleString('fr-FR');
+  _d=document.getElementById('d-kliv');if(_d)_d.textContent=kl.toLocaleString('fr-FR');
+  _d=document.getElementById('d-cout');if(_d)_d.textContent=(p*30).toLocaleString('fr-FR')+' €';
+}
+async function saveDenel(){
+  var obj={};
+  DENEL.forEach(function(dd,i){obj['r'+i]={p:(document.getElementById('dp'+i)||{}).value||'',l:(document.getElementById('dl'+i)||{}).value||'',o:(document.getElementById('do'+i)||{}).value||''};});
+  await sv('denel',obj);toast('Denel enregistre !');
+}
+
+// ===== HAPPY FRUITS =====
+async function renderHF(){
+  var container=document.getElementById('hf-sessions');
+  if(!container)return;
+  // Afficher les palox reçus 2 semaines avant
+  var recPrev=await ld('rec',{},wkey(CW-2));
+  var p1prev=parseInt(recPrev.b1p)||0;var p2prev=parseInt(recPrev.b2p)||0;
+  var totPrev=p1prev+p2prev;
+  var monPrev=getMon(CW-2);var venPrev=new Date(monPrev);venPrev.setDate(monPrev.getDate()+4);
+  var semPrev=isoW(monPrev);
+  var n1prev=recPrev.b1n||'Habitation Ressource';var n2prev=recPrev.b2n||'Les Musacées de Bassignac';
+  var hfPaloxInfo=document.getElementById('hf-palox-info');
+  if(hfPaloxInfo){
+    if(totPrev>0){
+      hfPaloxInfo.innerHTML='<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;"><span style="font-family:Syne,sans-serif;font-weight:800;color:var(--green);">📦 Palox disponibles : '+totPrev+' palox</span><br><span style="color:var(--mu);">Reçus le '+venPrev.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' — Sem '+String(semPrev).padStart(2,'0')+' ('+n1prev+' : '+p1prev+' | '+n2prev+' : '+p2prev+')</span></div>';
+    } else {
+      hfPaloxInfo.innerHTML='<div style="background:#FFF9E6;border:1px solid var(--br);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:var(--mu);font-style:italic;">Aucune réception enregistrée pour la sem '+String(semPrev).padStart(2,'0')+'</div>';
+    }
+  }
+  var s=await ld('hf',{});var mon=getMon(CW);
+  container.innerHTML='';
+  SESS.forEach(function(ss,i){
+    var sv2=s['r'+i]||{};
+    var fruit=sv2.fruit||'banane';
+    var de=new Date(mon);de.setDate(mon.getDate()+ss.eo);
+    var ds=new Date(mon);ds.setDate(mon.getDate()+ss.so);
+    var fc=fruit==='ananas'?'var(--bd)':fruit==='banane'?'var(--green)':'#aaa';
+    var anBtn=ananasOn?'<button class="sfb'+(fruit==='ananas'?' on':'')+'" style="--fc:var(--bd)" onclick="setSF('+i+',\'ananas\')">&#127821; Ananas</button>':'';
+    var fields=buildFields(i,fruit,sv2);
+    container.innerHTML+=
+      '<div class="card" id="sc'+i+'" style="border-left:4px solid '+fc+'">'+
+      '<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:11px;">'+
+      '<span style="font-family:Syne,sans-serif;font-weight:800;font-size:0.93rem;color:'+fc+'">Session '+(i+1)+' &mdash; '+ss.el+'</span>'+
+      '<span style="font-size:0.68rem;color:var(--mu)">Epluchage '+fmt(de)+' &bull; Sachets '+fmt(ds)+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;align-items:center;">'+
+      '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:0.76rem;">Fruit :</span>'+
+      '<button class="sfb'+(fruit==='banane'?' on':'')+'" style="--fc:var(--green)" onclick="setSF('+i+',\'banane\')">&#127820; Banane</button>'+
+      anBtn+
+      '<button class="sfb'+(fruit==='rien'?' on':'')+'" style="--fc:#999" onclick="setSF('+i+',\'rien\')">&#10006; Rien</button>'+
+      '</div>'+
+      '<div id="sf'+i+'">'+fields+'</div>'+
+      '</div>';
+  });
+
+  calcHF(s);
+}
+
+function buildFields(i,fruit,sv2){
+  if(fruit==='rien')return '<div style="color:var(--mu);font-size:0.78rem;padding:5px 0;font-style:italic;">Pas de production cette session.</div>';
+  if(fruit==='banane'){
+    var kge=sv2.p?(parseInt(sv2.p)*300).toLocaleString('fr-FR')+' kg':'--';
+    return '<div style="overflow-x:auto"><table><thead><tr><th>Palox</th><th>Kg estimes</th><th>40g</th><th>115g</th><th>40g can.</th><th>115g can.</th><th>Obs.</th></tr></thead><tbody><tr>'+
+      '<td><input type="number" class="is" id="bp'+i+'" value="'+(sv2.p||'')+'" placeholder="0" min="0" oninput="calcHF()"></td>'+
+      '<td id="bke'+i+'" style="font-weight:700;color:var(--green)">'+kge+'</td>'+
+      '<td><input type="number" class="is" id="b40-'+i+'" value="'+(sv2.s40||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="number" class="is" id="b115-'+i+'" value="'+(sv2.s115||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="number" class="is" id="b40c-'+i+'" value="'+(sv2.s40c||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="number" class="is" id="b115c-'+i+'" value="'+(sv2.s115c||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="text" id="bo'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td>'+
+      '</tr></tbody></table></div>'+
+      '<div class="brow"><button class="btn" onclick="saveS('+i+')">Enregistrer session '+(i+1)+'</button></div>';
+  }
+  if(fruit==='ananas'){
+    var c=sv2.anp?parseInt(sv2.anp):0;
+    return '<div style="overflow-x:auto"><table><thead><tr><th>Colis</th><th>Kg nets (x12)</th><th>Pieces (x8)</th><th>Sachets 30g</th><th>Obs.</th></tr></thead><tbody><tr>'+
+      '<td><input type="number" class="is" id="ac'+i+'" value="'+(sv2.anp||'')+'" placeholder="0" min="0" oninput="calcHF()"></td>'+
+      '<td id="ake'+i+'" style="font-weight:700;color:var(--bd)">'+(c?c*12+' kg':'--')+'</td>'+
+      '<td id="apc'+i+'" style="font-weight:700;color:var(--mu)">'+(c?c*8+' pcs':'--')+'</td>'+
+      '<td><input type="number" class="is" id="a30-'+i+'" value="'+(sv2.s30||'')+'" placeholder="0" oninput="calcHF()"></td>'+
+      '<td><input type="text" id="ao'+i+'" value="'+(sv2.o||'')+'" placeholder="..."></td>'+
+      '</tr></tbody></table></div>'+
+      '<div class="brow"><button class="btn btn-an" onclick="saveS('+i+')">Enregistrer session '+(i+1)+'</button></div>';
+  }
+  return '';
+}
+
+async function setSF(i,fruit){
+  var s=await ld('hf',{});
+  if(!s['r'+i])s['r'+i]={};
+  s['r'+i].fruit=fruit;
+  await sv('hf',s);
+  renderHF();
+}
+
+async function saveS(i){
+  var s=await ld('hf',{});
+  if(!s['r'+i])s['r'+i]={};
+  var d=s['r'+i];var fruit=d.fruit||'banane';
+  if(fruit==='banane'){d.p=(document.getElementById('bp'+i)||{}).value||'';d.s40=(document.getElementById('b40-'+i)||{}).value||'';d.s115=(document.getElementById('b115-'+i)||{}).value||'';d.s40c=(document.getElementById('b40c-'+i)||{}).value||'';d.s115c=(document.getElementById('b115c-'+i)||{}).value||'';d.o=(document.getElementById('bo'+i)||{}).value||'';}
+  else if(fruit==='ananas'){d.anp=(document.getElementById('ac'+i)||{}).value||'';d.s30=(document.getElementById('a30-'+i)||{}).value||'';d.o=(document.getElementById('ao'+i)||{}).value||'';}
+  s['r'+i]=d;await sv('hf',s);toast('Session '+(i+1)+' enregistree !');
+}
+
+function calcHF(s){
+  s=s||{};
+  var bp=0,s40=0,s115=0,s40c=0,s115c=0,ac=0,s30=0;
+  SESS.forEach(function(ss,i){
+    var d=s['r'+i]||{};var fruit=d.fruit||'banane';
+    if(fruit==='banane'){
+      var p=parseInt((document.getElementById('bp'+i)||{}).value)||parseInt(d.p)||0;bp+=p;
+      if(document.getElementById('bke'+i))document.getElementById('bke'+i).textContent=p?(p*300).toLocaleString('fr-FR')+' kg':'--';
+      s40+=parseInt((document.getElementById('b40-'+i)||{}).value)||0;s115+=parseInt((document.getElementById('b115-'+i)||{}).value)||0;
+      s40c+=parseInt((document.getElementById('b40c-'+i)||{}).value)||0;s115c+=parseInt((document.getElementById('b115c-'+i)||{}).value)||0;
+    }else if(fruit==='ananas'){
+      var a=parseInt((document.getElementById('ac'+i)||{}).value)||parseInt(d.anp)||0;ac+=a;
+      if(document.getElementById('ake'+i))document.getElementById('ake'+i).textContent=a?a*12+' kg':'--';
+      if(document.getElementById('apc'+i))document.getElementById('apc'+i).textContent=a?a*8+' pcs':'--';
+      s30+=parseInt((document.getElementById('a30-'+i)||{}).value)||0;
+    }
+  });
+  var bt=s40+s115+s40c+s115c;
+  var kgProduit=(s40+s40c)*0.04+(s115+s115c)*0.115;
+  document.getElementById('hb-p').textContent=bp;document.getElementById('hb-s40').textContent=s40;document.getElementById('hb-s115').textContent=s115;
+  document.getElementById('hb-s40c').textContent=s40c;document.getElementById('hb-s115c').textContent=s115c;document.getElementById('hb-tot').textContent=bt;
+  document.getElementById('hb-kg').textContent=kgProduit.toFixed(2)+' kg';
+  // Rendements
+  var rdtS=document.getElementById('hb-rdt-s');
+  var rdtK=document.getElementById('hb-rdt-k');
+  if(rdtS)rdtS.textContent=bp>0?Math.round(bt/bp)+' sach.':'--';
+  if(rdtK)rdtK.textContent=bp>0?(kgProduit/bp).toFixed(2)+' kg':'--';
+  var coutHF=document.getElementById('hb-cout');
+  if(coutHF)coutHF.textContent=(bp*60).toLocaleString('fr-FR')+' €';
+  var el2;
+  el2=document.getElementById('ha-c');if(el2)el2.textContent=ac;
+  el2=document.getElementById('ha-s30');if(el2)el2.textContent=s30;
+  el2=document.getElementById('ha-tot');if(el2)el2.textContent=s30;
+  el2=document.getElementById('ha-kg');if(el2)el2.textContent=(s30*0.03).toFixed(2)+' kg';
+}
+
+
+// ===== PESEE =====
+async function renderPesee(){
+  try {
+    var rec=await ld('rec',{});
+    var f1n=rec.b1n||'Habitation Ressource';
+    var f2n=rec.b2n||'Les Musacees de Bassignac';
+    var el;
+    el=document.getElementById('pee-f1n'); if(el)el.textContent=f1n;
+    el=document.getElementById('pee-f2n'); if(el)el.textContent=f2n;
+    el=document.getElementById('pee-row2'); if(el)el.style.display=(rec.nbB||2)===1?'none':'';
+    el=document.getElementById('pee-p1'); if(el)el.value=rec.b1p||'';
+    el=document.getElementById('pee-p2'); if(el)el.value=rec.b2p||'';
+    var s=await ld('pesee',{});
+    el=document.getElementById('pee-k1'); if(el)el.value=s.k1||'';
+    el=document.getElementById('pee-k2'); if(el)el.value=s.k2||'';
+    calcPesee();
+  } catch(e){ console.error('renderPesee:', e); }
+}
+function calcPesee(){
+  var PALOX_VIDE=43; // kg par palox vide
+  var p1=parseFloat(document.getElementById('pee-p1').value)||0;
+  var k1=parseFloat(document.getElementById('pee-k1').value)||0;
+  var p2=parseFloat(document.getElementById('pee-p2').value)||0;
+  var k2=parseFloat(document.getElementById('pee-k2').value)||0;
+  var totp=p1+p2; var totk=k1+k2;
+  // Poids nets
+  var n1=k1?(k1-p1*PALOX_VIDE):0;
+  var n2=k2?(k2-p2*PALOX_VIDE):0;
+  var totn=n1+n2;
+  var el;
+  el=document.getElementById('pee-n1');if(el)el.textContent=p1&&k1?(n1.toLocaleString('fr-FR')+' kg'):'--';
+  el=document.getElementById('pee-n2');if(el)el.textContent=p2&&k2?(n2.toLocaleString('fr-FR')+' kg'):'--';
+  el=document.getElementById('pee-totn');if(el)el.textContent=totn?(totn.toLocaleString('fr-FR')+' kg'):'--';
+  el=document.getElementById('pee-m1');if(el)el.textContent=p1&&n1?((n1/p1).toFixed(1)+' kg/palox'):'--';
+  el=document.getElementById('pee-m2');if(el)el.textContent=p2&&n2?((n2/p2).toFixed(1)+' kg/palox'):'--';
+  el=document.getElementById('pee-totp');if(el)el.textContent=totp?totp+' palox':'--';
+  el=document.getElementById('pee-totk');if(el)el.textContent=totk?totk.toLocaleString('fr-FR')+' kg brut':'--';
+  el=document.getElementById('pee-totm');if(el)el.textContent=(totp&&totn)?((totn/totp).toFixed(1)+' kg net/palox'):'--';
+}
+async function savePesee(){
+  await sv('pesee',{p1:document.getElementById('pee-p1').value,k1:document.getElementById('pee-k1').value,p2:document.getElementById('pee-p2').value,k2:document.getElementById('pee-k2').value});
+  toast('Pesee enregistree !');
+}
+
+// ===== RAPPORT DENEL =====
+async function showRapportDenel(){
+  // Cacher tous les panels
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('panel-rapport-denel').classList.add('on');
+  document.getElementById('wbar').style.display='none';
+
+  var now=new Date();
+  var td=new Date(now.getFullYear(),now.getMonth()+CM,1);
+  var y=td.getFullYear();var m=td.getMonth();
+  var MFR4=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var moisLabel=MFR4[m]+' '+y;
+
+  var el=document.getElementById('rapport-periode');
+  if(el)el.textContent=moisLabel+' · Généré le '+new Date().toLocaleDateString('fr-FR');
+
+  function getWeeksOfMonth4(y,m){
+    var d=new Date(y,m,1);var day=d.getDay();
+    d.setDate(d.getDate()-(day===0?6:day-1));
+    var last=new Date(y,m+1,0);var weeks=[];
+    while(d<=last){weeks.push(new Date(d));d=new Date(d);d.setDate(d.getDate()+7);}
+    return weeks;
+  }
+
+  var weeks=getWeeksOfMonth4(y,m);
+  var totalPaloxD=0,totalKgLivres=0,totalPaloxEp=0;
+  var rows='';
+
+  for(var wi=0;wi<weeks.length;wi++){
+    var mon=weeks[wi];
+    var wkStr=mon.getFullYear()+'-W'+String(isoW(mon)).padStart(2,'0');
+    var fri=new Date(mon);fri.setDate(mon.getDate()+4);
+    var wl='S'+String(isoW(mon)).padStart(2,'0');
+
+    var alloc=await ld('alloc',{},wkStr);
+    var paloxD=parseInt(alloc.d)||0;
+
+    var den=await ld('denel',{},wkStr);
+    var kgLiv=0,paloxEp=0;
+    for(var i=0;i<5;i++){
+      var dr=den['r'+i]||{};
+      paloxEp+=parseInt(dr.p)||0;
+      kgLiv+=parseFloat(dr.l)||0;
+    }
+
+    if(paloxD>0||kgLiv>0){
+      totalPaloxD+=paloxD;
+      totalKgLivres+=kgLiv;
+      totalPaloxEp+=paloxEp;
+      rows+='<tr><td><strong>'+wl+'</strong></td><td>'+mon.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' - '+fri.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'</td><td>'+paloxD+'</td><td>'+paloxEp+'</td><td>'+(kgLiv?kgLiv.toLocaleString('fr-FR')+' kg':'--')+'</td></tr>';
+    }
+  }
+
+  rows+='<tr class="trow-tot"><td colspan="2">TOTAL</td><td>'+totalPaloxD+'</td><td>'+totalPaloxEp+'</td><td>'+totalKgLivres.toLocaleString('fr-FR')+' kg</td></tr>';
+
+  var body=document.getElementById('rapport-body');
+  if(body)body.innerHTML=rows;
+
+  var e;
+  e=document.getElementById('rp-palox-d');if(e)e.textContent=totalPaloxD||'--';
+  e=document.getElementById('rp-palox-ep');if(e)e.textContent=totalPaloxEp||'--';
+  e=document.getElementById('rp-kg');if(e)e.textContent=totalKgLivres?totalKgLivres.toLocaleString('fr-FR')+' kg':'--';
+}
+
+// ===== EXPORT RAPPORT DENEL =====
+async function exportDenel(){
+  var now=new Date();
+  var td=new Date(now.getFullYear(),now.getMonth()+CM,1);
+  var y=td.getFullYear();var m=td.getMonth();
+  var MFR3=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  var moisLabel=MFR3[m]+' '+y;
+
+  function getWeeksOfMonth3(y,m){
+    var d=new Date(y,m,1);var day=d.getDay();
+    d.setDate(d.getDate()-(day===0?6:day-1));
+    var last=new Date(y,m+1,0);var weeks=[];
+    while(d<=last){weeks.push(new Date(d));d=new Date(d);d.setDate(d.getDate()+7);}
+    return weeks;
+  }
+
+  var weeks=getWeeksOfMonth3(y,m);
+  var totalPaloxD=0,totalKgLivres=0,totalPaloxEp=0;
+  var rows='';
+
+  for(var wi=0;wi<weeks.length;wi++){
+    var mon=weeks[wi];
+    var wkStr=mon.getFullYear()+'-W'+String(isoW(mon)).padStart(2,'0');
+    var fri=new Date(mon);fri.setDate(mon.getDate()+4);
+    var wl='S'+String(isoW(mon)).padStart(2,'0');
+
+    var alloc=await ld('alloc',{},wkStr);
+    var paloxD=parseInt(alloc.d)||0;
+
+    var den=await ld('denel',{},wkStr);
+    var kgLiv=0,paloxEp=0;
+    for(var i=0;i<5;i++){
+      var dr=den['r'+i]||{};
+      paloxEp+=parseInt(dr.p)||0;
+      kgLiv+=parseFloat(dr.l)||0;
+    }
+
+    if(paloxD>0||kgLiv>0){
+      totalPaloxD+=paloxD;
+      totalKgLivres+=kgLiv;
+      totalPaloxEp+=paloxEp;
+      rows+='<tr><td><strong>'+wl+'</strong></td><td>'+mon.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' - '+fri.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'</td><td>'+paloxD+'</td><td>'+paloxEp+'</td><td>'+(kgLiv?kgLiv.toLocaleString('fr-FR')+' kg':'--')+'</td></tr>';
+    }
+  }
+
+  rows+='<tr style="background:#E8F5E9;font-weight:700;border-top:2px solid #2D6A4F;"><td colspan="2">TOTAL</td><td>'+totalPaloxD+'</td><td>'+totalPaloxEp+'</td><td>'+totalKgLivres.toLocaleString('fr-FR')+' kg</td></tr>';
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rapport Denel '+moisLabel+'</title>'+
+  '<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1A1A0E;padding:30px;max-width:700px;margin:0 auto;}'+
+  '.hdr{background:#2D6A4F;color:#fff;padding:20px 24px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;gap:14px;}'+
+  '.hdr .title{font-size:18px;font-weight:700;}.hdr .sub{font-size:12px;opacity:0.8;margin-top:3px;}'+
+  '.grid{display:flex;gap:12px;margin-bottom:16px;}'+
+  '.box{flex:1;border:1px solid #E0E8DC;border-radius:8px;padding:12px;text-align:center;}'+
+  '.box .v{font-size:22px;font-weight:700;color:#185FA5;}.box .l{font-size:10px;color:#6B6B4A;text-transform:uppercase;margin-top:3px;}'+
+  'table{width:100%;border-collapse:collapse;margin-bottom:16px;}'+
+  'th{background:#185FA5;color:#fff;padding:8px 10px;text-align:left;font-size:11px;}'+
+  'td{padding:7px 10px;border-bottom:1px solid #E0E8DC;font-size:11px;}'+
+  'tr:nth-child(even) td{background:#F5F9FF;}'+
+  '.note{background:#FFF9E6;border:1px solid #FFE083;border-radius:8px;padding:12px;font-size:10px;color:#856404;margin-top:16px;}'+
+  '</style></head><body>'+
+  '<div class="hdr"><div style="font-size:28px;">🍯</div><div><div class="title">Rapport mensuel Denel — Happy Fruits</div><div class="sub">'+moisLabel+' · Généré le '+new Date().toLocaleDateString('fr-FR')+'</div></div></div>'+
+  '<div class="grid">'+
+  '<div class="box"><div class="v">'+totalPaloxD+'</div><div class="l">Palox alloués Denel</div></div>'+
+  '<div class="box"><div class="v">'+totalPaloxEp+'</div><div class="l">Palox épluchés</div></div>'+
+  '<div class="box"><div class="v">'+totalKgLivres.toLocaleString('fr-FR')+' kg</div><div class="l">Kg livrés total</div></div>'+
+  '</div>'+
+  '<table><thead><tr><th>Semaine</th><th>Dates</th><th>Palox alloués</th><th>Palox épluchés</th><th>Kg livrés</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+  "<div class=\"note\">&#9888; Ce rapport couvre uniquement les palox transformes et livres ce mois. Le stock vert ou en murissage nest pas calculable en temps reel.</div>"+
+  '</body></html>';
+
+  var w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
+
+// ===== EXPORT PDF =====
+function exportPDF(){
+  var mlbl=document.getElementById('mlbl').textContent;
+  var style='<style>body{font-family:Arial,sans-serif;font-size:12px;color:#1A1A0E;padding:20px;}h1{font-size:18px;color:#2D6A4F;margin-bottom:4px;}h2{font-size:13px;color:#2D6A4F;margin:16px 0 6px;border-bottom:2px solid #F5C518;padding-bottom:3px;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#2D6A4F;color:#fff;padding:6px 8px;text-align:left;font-size:11px;}td{padding:5px 8px;border-bottom:1px solid #E8E0C0;font-size:11px;}.tot td{background:#F0F9F5;font-weight:700;border-top:2px solid #40916C;}.grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}.box{border:1px solid #E8E0C0;border-radius:6px;padding:8px 12px;min-width:120px;text-align:center;}.box .v{font-size:20px;font-weight:800;color:#2D6A4F;}.box .l{font-size:9px;color:#6B6B4A;text-transform:uppercase;}</style>';
+  var m_bprec=document.getElementById('m-bprec').textContent;
+  var m_bf1=document.getElementById('m-bf1').textContent;
+  var m_bf2=document.getElementById('m-bf2').textContent;
+  var m_dp=document.getElementById('m-dp').textContent;
+  var m_dkg=document.getElementById('m-dkg').textContent;
+  var m_hbp=document.getElementById('m-hbp').textContent;
+  var m_hbs=document.getElementById('m-hbs').textContent;
+  var m_hac=document.getElementById('m-hac').textContent;
+  var m_has=document.getElementById('m-has').textContent;
+  var tableRows=document.getElementById('mois-body').innerHTML;
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recap '+mlbl+'</title>'+style+'</head><body>'+
+    '<h1>&#127820; Happy Fruits &mdash; Recap Mensuel</h1>'+
+    '<p style="color:#6B6B4A;font-size:11px;margin-bottom:14px;">'+mlbl+' &bull; Export le '+new Date().toLocaleDateString('fr-FR')+'</p>'+
+    '<h2>Synthese du mois</h2>'+
+    '<div class="grid">'+
+    '<div class="box"><div class="v">'+m_bprec+'</div><div class="l">Palox recus</div></div>'+
+    '<div class="box"><div class="v">'+m_bf1+'</div><div class="l">Palox F1</div></div>'+
+    '<div class="box"><div class="v">'+m_bf2+'</div><div class="l">Palox F2</div></div>'+
+    '<div class="box"><div class="v">'+m_dp+'</div><div class="l">Palox Denel</div></div>'+
+    '<div class="box"><div class="v">'+m_dkg+'</div><div class="l">kg livres Denel</div></div>'+
+    '<div class="box"><div class="v">'+m_hbp+'</div><div class="l">Palox HF Banane</div></div>'+
+    '<div class="box"><div class="v">'+m_hbs+'</div><div class="l">Sachets Banane</div></div>'+
+    '<div class="box"><div class="v">'+m_hac+'</div><div class="l">Colis Ananas</div></div>'+
+    '<div class="box"><div class="v">'+m_has+'</div><div class="l">Sachets Ananas</div></div>'+
+    '</div>'+
+    '<h2>Detail par semaine</h2>'+
+    '<table><thead><tr><th>Semaine</th><th>Palox recus</th><th>F1</th><th>F2</th><th>Palox Denel</th><th>kg Denel</th><th>Palox HF Banane</th><th>Sachets Banane</th><th>Colis Ananas</th><th>Sachets Ananas</th></tr></thead><tbody>'+tableRows+'</tbody></table>'+
+    '</body></html>';
+  var w=window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
+
+// ===== RECAP MENSUEL =====
+function getWeeksOfMonth(y,m){var d=new Date(y,m,1);var day=d.getDay();d.setDate(d.getDate()-(day===0?6:day-1));var last=new Date(y,m+1,0);var weeks=[];while(d<=last){weeks.push(new Date(d));d=new Date(d);d.setDate(d.getDate()+7);}return weeks;}
+
+async function renderMois(){
+  var now=new Date();var td=new Date(now.getFullYear(),now.getMonth()+CM,1);
+  var y=td.getFullYear();var m=td.getMonth();
+  document.getElementById('mlbl').textContent=MFR[m]+' '+y;
+  var weeks=getWeeksOfMonth(y,m);
+  var tb=0,tf1=0,tf2=0,tdp=0,tdkg=0,thbp=0,thbs=0,thac=0,thas=0;
+  var totalKgPesF1=0,totalPaloxPesF1=0,totalKgPesF2=0,totalPaloxPesF2=0;
+  var alertes=[];
+  var body=document.getElementById('mois-body');body.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--mu);font-style:italic;padding:16px;">Chargement...</td></tr>';
+  var rows='';
+  for(var wi=0;wi<weeks.length;wi++){
+    var mon=weeks[wi];
+    var wkStr=mon.getFullYear()+'-W'+String(isoW(mon)).padStart(2,'0');
+    var rec=await ld('rec',{},wkStr);
+    var p1=parseInt(rec.b1p)||0;var p2=parseInt(rec.b2p)||0;var bprec=p1+p2;
+    var den=await ld('denel',{},wkStr);var dp=0,dkg=0;
+    for(var i=0;i<5;i++){var dr=den['r'+i]||{};dp+=parseInt(dr.p)||0;dkg+=parseFloat(dr.l)||0;}
+    var hf=await ld('hf',{},wkStr);var hbp=0,hbs=0,hac=0,has=0;
+    for(var j=0;j<2;j++){var hr=hf['r'+j]||{};var fruit=hr.fruit||'banane';if(fruit==='banane'){hbp+=parseInt(hr.p)||0;hbs+=(parseInt(hr.s40)||0)+(parseInt(hr.s115)||0)+(parseInt(hr.s40c)||0)+(parseInt(hr.s115c)||0);}else if(fruit==='ananas'){hac+=parseInt(hr.anp)||0;has+=parseInt(hr.s30)||0;}}
+    // Pesées
+    var pes=await ld('pesee',{},wkStr);
+    if(pes.k1&&pes.p1){totalKgPesF1+=parseFloat(pes.k1)||0;totalPaloxPesF1+=parseFloat(pes.p1)||0;}
+    if(pes.k2&&pes.p2){totalKgPesF2+=parseFloat(pes.k2)||0;totalPaloxPesF2+=parseFloat(pes.p2)||0;}
+    tb+=bprec;tf1+=p1;tf2+=p2;tdp+=dp;tdkg+=dkg;thbp+=hbp;thbs+=hbs;thac+=hac;thas+=has;
+    // Alertes données manquantes
+    var wl='S'+String(isoW(mon)).padStart(2,'0');
+    if(bprec>0&&dp===0&&hbp===0)alertes.push('⚠️ '+wl+' : Reception enregistrée mais aucune transformation saisie');
+    var alloc=await ld('alloc',{},wkStr);
+    var allocD=parseInt(alloc.d)||0;var allocH=parseInt(alloc.h)||0;
+    if(bprec>0&&(allocD+allocH)<bprec&&(allocD+allocH)>0)alertes.push('⚠️ '+wl+' : '+( bprec-(allocD+allocH))+' palox non alloués');
+    var fri=new Date(mon);fri.setDate(mon.getDate()+4);
+    var hasData=bprec>0||dp>0||hbp>0||hac>0;
+    var st=hasData?'':'style="color:var(--mu);font-style:italic;"';
+    rows+='<tr '+st+'><td><strong>'+wl+'</strong><br><span style="font-size:0.66rem">'+mon.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'-'+fri.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'</span></td><td>'+(bprec||'--')+'</td><td>'+(p1||'--')+'</td><td>'+(p2||'--')+'</td><td>'+(dp||'--')+'</td><td>'+(dkg?dkg.toLocaleString('fr-FR')+' kg':'--')+'</td><td>'+(hbp||'--')+'</td><td>'+(hbs||'--')+'</td><td>'+(hac||'--')+'</td><td>'+(has||'--')+'</td></tr>';
+  }
+  rows+='<tr class="trow-tot"><td style="font-family:Syne,sans-serif">TOTAL</td><td>'+tb+'</td><td>'+tf1+'</td><td>'+tf2+'</td><td>'+tdp+'</td><td>'+tdkg.toLocaleString('fr-FR')+' kg</td><td>'+thbp+'</td><td>'+thbs+'</td><td>'+thac+'</td><td>'+thas+'</td></tr>';
+  body.innerHTML=rows;
+  document.getElementById('m-bprec').textContent=tb;document.getElementById('m-bf1').textContent=tf1;document.getElementById('m-bf2').textContent=tf2;
+  document.getElementById('m-dp').textContent=tdp;document.getElementById('m-dkg').textContent=tdkg.toLocaleString('fr-FR');
+  document.getElementById('m-hbp').textContent=thbp;document.getElementById('m-hbs').textContent=thbs;
+  document.getElementById('m-hac').textContent=thac;document.getElementById('m-has').textContent=thas;
+  // Taux de transformation
+  var tauxDenel=tb>0?Math.round((tdp/tb)*100):'--';
+  var tauxHF=tb>0?Math.round((thbp/tb)*100):'--';
+  document.getElementById('m-taux-denel').textContent=tauxDenel!=='--'?tauxDenel+'%':'--';
+  document.getElementById('m-taux-hf').textContent=tauxHF!=='--'?tauxHF+'%':'--';
+  // Historique pesées
+  document.getElementById('m-moy-f1').textContent=totalPaloxPesF1>0?Math.round(totalKgPesF1/totalPaloxPesF1)+' kg':'--';
+  document.getElementById('m-moy-f2').textContent=totalPaloxPesF2>0?Math.round(totalKgPesF2/totalPaloxPesF2)+' kg':'--';
+  // Alertes
+  var alertDiv=document.getElementById('m-alertes');
+  if(alertDiv){
+    if(alertes.length>0){
+      alertDiv.innerHTML='<div style="background:#FDEDED;border:1px solid #F5C6CB;border-radius:8px;padding:12px 14px;">'+
+        '<div style="font-family:Syne,sans-serif;font-weight:800;color:var(--red);margin-bottom:6px;">⚠️ Données à vérifier</div>'+
+        alertes.map(function(a){return '<div style="font-size:0.76rem;color:#721C24;margin-bottom:3px;">'+a+'</div>';}).join('')+
+        '</div>';
+    } else {
+      alertDiv.innerHTML='<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:10px 14px;font-size:0.78rem;color:var(--green);font-family:Syne,sans-serif;font-weight:700;">✅ Toutes les données du mois sont complètes</div>';
+    }
+  }
+}
+
+// ===== DASHBOARD =====
+var CM_DB = 0;
+function chDB(d){CM_DB+=d;renderDashboard();}
+
+async function renderDashboard(){
+  var now=new Date();
+  var td=new Date(now.getFullYear(),now.getMonth()+CM_DB,1);
+  var y=td.getFullYear();var m=td.getMonth();
+  var MFR2=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  
+  var periodeEl=document.getElementById('db-periode');
+  if(periodeEl)periodeEl.textContent=MFR2[m]+' '+y;
+
+  // Calculer les semaines du mois
+  function getWeeksOfMonth2(y,m){
+    var d=new Date(y,m,1);var day=d.getDay();
+    d.setDate(d.getDate()-(day===0?6:day-1));
+    var last=new Date(y,m+1,0);var weeks=[];
+    while(d<=last){weeks.push(new Date(d));d=new Date(d);d.setDate(d.getDate()+7);}
+    return weeks;
+  }
+  
+  var weeks=getWeeksOfMonth2(y,m);
+  var totalPalox=0,totalPaloxD=0,totalPaloxHF=0;
+  var totalKgLivres=0,totalPaloxEp=0;
+  var totalS40=0,totalS115=0,totalS40c=0,totalS115c=0;
+  
+  for(var wi=0;wi<weeks.length;wi++){
+    var mon=weeks[wi];
+    var wkStr=mon.getFullYear()+'-W'+String(isoW(mon)).padStart(2,'0');
+    
+    var rec=await ld('rec',{},wkStr);
+    var p1=parseInt(rec.b1p)||0;var p2=parseInt(rec.b2p)||0;
+    totalPalox+=p1+p2;
+    
+    var alloc=await ld('alloc',{},wkStr);
+    totalPaloxD+=parseInt(alloc.d)||0;
+    // Palox HF : compter le réel depuis les sessions HF (pas l'alloc prévue)
+    var hfForAlloc=await ld('hf',{},wkStr);
+    for(var ja=0;ja<2;ja++){
+      var hra=hfForAlloc['r'+ja]||{};
+      if((hra.fruit||'banane')==='banane'){totalPaloxHF+=parseInt(hra.p)||0;}
+    }
+    
+    var den=await ld('denel',{},wkStr);
+    for(var i=0;i<5;i++){
+      var dr=den['r'+i]||{};
+      totalPaloxEp+=parseInt(dr.p)||0;
+      totalKgLivres+=parseFloat(dr.l)||0;
+    }
+    
+    var hf=await ld('hf',{},wkStr);
+    for(var j=0;j<2;j++){
+      var hr=hf['r'+j]||{};
+      if((hr.fruit||'banane')==='banane'){
+        totalS40+=parseInt(hr.s40)||0;
+        totalS115+=parseInt(hr.s115)||0;
+        totalS40c+=parseInt(hr.s40c)||0;
+        totalS115c+=parseInt(hr.s115c)||0;
+      }
+    }
+  }
+  
+  var totalSachets=totalS40+totalS115+totalS40c+totalS115c;
+  var rdtMoy=totalPaloxHF>0?Math.round(totalSachets/totalPaloxHF):0;
+  var pctD=totalPalox>0?Math.round((totalPaloxD/totalPalox)*100):0;
+  var pctHF=totalPalox>0?Math.round((totalPaloxHF/totalPalox)*100):0;
+  var coutD=totalPaloxD*30;
+  var coutHF=totalPaloxHF*60;
+  
+  var el;
+  el=document.getElementById('db-palox-recus');if(el)el.textContent=totalPalox||'--';
+  el=document.getElementById('db-kg-nets');if(el)el.textContent=totalPalox?(totalPalox*300).toLocaleString('fr-FR'):'--';
+  el=document.getElementById('db-palox-denel');if(el)el.textContent=totalPaloxD||'--';
+  el=document.getElementById('db-palox-hf');if(el)el.textContent=totalPaloxHF||'--';
+  el=document.getElementById('db-palox-tot');if(el)el.textContent=weeks.length;
+  el=document.getElementById('db-pct-denel');if(el)el.textContent=pctD+'%';
+  el=document.getElementById('db-pct-hf');if(el)el.textContent=pctHF+'%';
+  el=document.getElementById('db-bar-d');if(el)el.style.width=pctD+'%';
+  el=document.getElementById('db-bar-h');if(el){el.style.left=pctD+'%';el.style.width=pctHF+'%';}
+  el=document.getElementById('db-sachets-tot');if(el)el.textContent=totalSachets||'--';
+  el=document.getElementById('db-sachets-40');if(el)el.textContent=(totalS40+totalS40c)||'--';
+  el=document.getElementById('db-sachets-115');if(el)el.textContent=(totalS115+totalS115c)||'--';
+  el=document.getElementById('db-rdt');if(el)el.textContent=rdtMoy?rdtMoy+' sach.':'--';
+  el=document.getElementById('db-palox-hf-mois');if(el)el.textContent=totalPaloxHF||'--';
+  el=document.getElementById('db-paiement-hf');if(el)el.textContent=totalPaloxHF?(totalPaloxHF*60).toLocaleString('fr-FR')+' €':'-- €';
+  el=document.getElementById('db-kg-denel');if(el)el.textContent=totalKgLivres?totalKgLivres.toLocaleString('fr-FR')+' kg':'--';
+  el=document.getElementById('db-palox-ep');if(el)el.textContent=totalPaloxEp||'--';
+  // CA Denel
+  var ca=Math.round(totalKgLivres*1.15);
+  var frais=totalPaloxD*30;
+  var net=Math.round(totalKgLivres*1.05);
+  el=document.getElementById('db-ca-denel');if(el)el.textContent=totalKgLivres?ca.toLocaleString('fr-FR')+' €':'-- €';
+  el=document.getElementById('db-frais-denel');if(el)el.textContent=totalPaloxD?(frais).toLocaleString('fr-FR')+' €':'-- €';
+  el=document.getElementById('db-net-denel');if(el)el.textContent=totalKgLivres?net.toLocaleString('fr-FR')+' €':'-- €';
+  el=document.getElementById('db-cout-denel');if(el)el.textContent=coutD.toLocaleString('fr-FR')+' €';
+  el=document.getElementById('db-cout-hf');if(el)el.textContent=coutHF.toLocaleString('fr-FR')+' €';
+  el=document.getElementById('db-cout-tot');if(el)el.textContent=(coutD+coutHF).toLocaleString('fr-FR')+' €';
+}
+
+// ===== AGENDA =====
+async function renderAgenda(){
+  var container=document.getElementById('agenda-body');
+  if(!container)return;
+  var now=new Date();
+  var currentWeek=isoW(now);
+  var currentYear=now.getFullYear();
+  
+  // Générer toutes les semaines de l'année en cours
+  var html='';
+  var months=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  var lastMonth=-1;
+  
+  for(var w=1;w<=52;w++){
+    // Calculer le lundi de la semaine w
+    var d=new Date(currentYear,0,4);
+    var day=d.getDay();
+    d.setDate(d.getDate()-(day===0?6:day-1)+(w-1)*7);
+    var fri=new Date(d);fri.setDate(d.getDate()+4);
+    var transDate=new Date(d);transDate.setDate(d.getDate()+14); // lundi sem +2
+    var transSem=isoW(transDate);
+    
+    // Afficher le mois si changement
+    var month=fri.getMonth();
+    if(month!==lastMonth){
+      html+='<div style="font-family:Syne,sans-serif;font-weight:800;font-size:0.8rem;color:var(--green);padding:10px 0 6px;border-top:'+(lastMonth===-1?'none':'1px solid var(--br)')+'">'+months[month]+' '+currentYear+'</div>';
+      lastMonth=month;
+    }
+    
+    // Statut de la semaine
+    var woff=w-currentWeek;
+    var isCurrent=w===currentWeek;
+    var isPast=w<currentWeek;
+    var statut=isCurrent?'🔄 En cours':isPast?'✅':'⏳';
+    var bg=isCurrent?'background:#FFF9E0;border:2px solid var(--banana);':'background:var(--sf);border:1px solid var(--br);';
+    var textColor=isPast?'color:var(--mu);':'color:var(--tx);';
+    
+    html+='<div onclick="goToWeek('+woff+')" style="'+bg+'border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:10px;'+textColor+'">'+
+      '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:1rem;min-width:50px;color:'+(isCurrent?'var(--bd)':'var(--green)')+'">S'+String(w).padStart(2,'0')+'</div>'+
+      '<div style="flex:1;">'+
+        '<div style="font-size:0.78rem;font-weight:700;">Réception ven. '+fri.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+'</div>'+
+        '<div style="font-size:0.68rem;color:var(--mu);">→ Transformation lun. '+transDate.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' (Sem '+String(transSem).padStart(2,'0')+')</div>'+
+      '</div>'+
+      '<div style="font-size:0.8rem;">'+statut+'</div>'+
+    '</div>';
+  }
+  
+  container.innerHTML=html;
+  
+  // Scroller vers la semaine actuelle
+  setTimeout(function(){
+    var items=container.querySelectorAll('[style*="FFF9E0"]');
+    if(items.length>0)items[0].scrollIntoView({behavior:'smooth',block:'center'});
+  },100);
+}
+
+function goToWeek(woff){
+  CW=woff;
+  // Mettre à jour la liste déroulante
+  var sel=document.getElementById('week-select');
+  if(sel){
+    for(var i=0;i<sel.options.length;i++){
+      if(parseInt(sel.options[i].value)===woff){sel.selectedIndex=i;break;}
+    }
+  }
+  renderAll();
+  // Aller sur l'onglet Réception
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('panel-rec').classList.add('on');
+  document.querySelector('.tb').classList.add('on');
+  document.getElementById('wbar').style.display='flex';
+  // Scroller en haut
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('Semaine S'+String(isoW(getMon(woff))).padStart(2,'0')+' sélectionnée !');
+}
+
+async function renderAll(){
+  renderWlbl();
+  try { await renderRec(); } catch(e){ console.error('renderRec:', e); }
+  try { if(document.getElementById('panel-repartition').classList.contains('on')) await renderRepartition(); } catch(e){ console.error('renderRepartition:', e); }
+  try { await renderMuris(); } catch(e){ console.error('renderMuris:', e); }
+  try { await renderDenel(); } catch(e){ console.error('renderDenel:', e); }
+  try { await loadAnanasState(); } catch(e){ console.error('loadAnanasState:', e); }
+  try { await renderHF(); } catch(e){ console.error('renderHF:', e); }
+  try { await renderPesee(); } catch(e){ console.error('renderPesee:', e); }
+}
+
+// ===== BOOT =====
+initDB().then(function(){ renderAll(); });
+
+</script>
+
+</body>
+</html>
